@@ -219,7 +219,7 @@ list MoneyDeposited dummy PositiveContribution ZeroTurnover AllCentral AllLocal 
      +-------------------------------------------------------------------------+
 */
 
-keep if TotalCount==5
+//keep if TotalCount==5
 
 /* Always present firms
 
