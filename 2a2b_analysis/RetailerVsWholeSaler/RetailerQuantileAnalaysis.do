@@ -428,12 +428,16 @@ gen Control2=1 if Treat==0&ControlGroup==100
 replace Control2=0 if Treat==0&ControlGroup<100
 
 
-
 gen Treat2=1 if Treat==1&TreatGroup==100&TaxYear==1
-replace Treat2=0 if Treat==0&ControlGroup==100&TaxYear==1
+replace Treat2=0 if Treat==1&TreatGroup<100&TaxYear==1
+gen Control2=1 if Treat==0&ControlGroup==100&TaxYear==1
+replace Control2=0 if Treat==0&ControlGroup<100&TaxYear==1
+
 
 gsort DealerTIN TaxYear
 by DealerTIN: replace Treat2=Treat2[_n-1] if Treat2>=.
+by DealerTIN: replace Control2=Control2[_n-1] if Control2>=.
+
 
 gen Treat2=0 if ControlGroup==100
 replace Treat2=1 if TreatGroup==100
@@ -442,13 +446,21 @@ replace Treat2=4 if TreatGroup<100
 
 preserve
 collapse (sum) MoneyDeposited, by(TaxYear Treat2)
-
+twoway (connected MoneyDeposited TaxYear if Treat2==1) (connected MoneyDeposited TaxYear if Treat2==0, lpattern(dash)) 
+restore
 
 
 preserve
 collapse (sum) MoneyDeposited (sum) AvgMoneyDeposited=MoneyDeposited (semean) SEMoneyDeposited=MoneyDeposited, by(TaxYear Treat2 Control2)
 twoway (connected AvgMoneyDeposited TaxYear if Treat2==1) (connected AvgMoneyDeposited TaxYear if Treat2==0, lpattern(dash)) (connected AvgMoneyDeposited TaxYear if Control2==1,lpattern(dash_dot)) (connected AvgMoneyDeposited TaxYear if Control2==0, lpattern(dash_3dot)), xline(2) legend (order(1 "Wholesalers top 1%" 2 "Wholesalers bottom 99%" 3 "Retailers top 1%" 4 "Retailers bottom 99%")) title("Trends for VAT Deposited") note("Vat deposited in million rupees. Number of control firms is 3297 and number of treatment firms is 1951") graphregion(color(white))
 restore 
+
+
+preserve
+collapse (sum) MoneyDeposited (sum) AvgMoneyDeposited=MoneyDeposited (semean) SEMoneyDeposited=MoneyDeposited, by(TaxYear Treat2 Control2)
+twoway (connected AvgMoneyDeposited TaxYear if Treat2==1, lpattern(dash)) (connected AvgMoneyDeposited TaxYear if Control2==1, lpattern(dash_3dot)), xline(2) legend (order(1 "Wholesalers top 1%" 2 "Wholesalers bottom 99%" 3 "Retailers top 1%" 4 "Retailers bottom 99%")) title("Trends for VAT Deposited") note("Vat deposited in million rupees. Number of control firms is 3297 and number of treatment firms is 1951") graphregion(color(white))
+restore 
+
 
 preserve
 collapse (mean) MoneyDeposited OutputTaxBeforeAdjustment TaxCreditBeforeAdjustment, by(TaxYear Treat ZeroTaxCredit)

@@ -205,17 +205,19 @@ gen SalesRatio=OutputTaxBeforeAdjustment/SumTaxAmount
 preserve
 drop if SalesRatio>100&SalesRatio!=.
 collapse (mean) SalesRatio (sum) OutputTaxBeforeAdjustment SumTaxAmount, by(TaxQuarter)
-twoway (connected SalesRatio TaxQuarter if SalesRatio!=.)
+twoway (connected SalesRatio TaxQuarter if SalesRatio!=.&TaxQuarter!=12)
 //graph save Graph "F:\2a2b_analysis\IntraFirmAnalysis\MeanPurchaseRatio_allfirms.gph"
 //graph export "F:\2a2b_analysis\IntraFirmAnalysis\MeanPurchaseRatio_allfirms.pdf", as(pdf) replace
 restore 
 
-
+gen dummy=1
 preserve
 drop if SumTaxAmount>1000
 drop if SalesRatio>100&SalesRatio!=.
-collapse (mean) SalesRatio (mean) OutputTaxBeforeAdjustment SumTaxAmount, by(TaxQuarter)
-twoway (connected OutputTaxBeforeAdjustment TaxQuarter if SalesRatio!=.) (connected SumTaxAmount TaxQuarter if SalesRatio!=.) 
+drop if SalesRatio==.
+bys TaxQuarter: sum SalesRatio OutputTaxBeforeAdjustment SumTaxAmount if SalesRatio!=., detail
+collapse (count) dummy (mean) SalesRatio (mean) OutputTaxBeforeAdjustment SumTaxAmount, by(TaxQuarter)
+twoway (connected OutputTaxBeforeAdjustment TaxQuarter if SalesRatio!=.&TaxQuarter!=12) (connected SumTaxAmount TaxQuarter if SalesRatio!=.&TaxQuarter!=12) 
 //graph save Graph "F:\2a2b_analysis\IntraFirmAnalysis\TaxCreditComparison_allfirms.gph"
 //graph export "F:\2a2b_analysis\IntraFirmAnalysis\TaxCreditComparison_allfirms.pdf", as(pdf) replace
 restore 
