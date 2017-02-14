@@ -626,18 +626,32 @@ xtreg TaxRatio Post iTaxYear2 iTaxYear4 iTaxYear5, fe cluster(DealerTIN)
 
 //TotalCount==5
 //TreatAnalysis
-xtreg PositiveContribution Post iPostTreat iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5  if TotalCount==5, fe cluster(DealerTIN)
-//outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex replace nocons keep(Post iPostTreat) 
-xtreg VatIncrease Post iPostTreat iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5  if TotalCount==5, fe cluster(DealerTIN)
-//outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
-xtreg MoneyDeposited Post iPostTreat iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 if TotalCount==5, fe cluster(DealerTIN)
-//outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
-xtreg TaxCreditBeforeAdjustment Post iPostTreat  iTaxYear3 iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, fe cluster(DealerTIN)
-//outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
-xtreg OutputTaxBeforeAdjustment  Post iPostTreat iTaxYear3 iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, fe cluster(DealerTIN)
-//outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
+xtreg PositiveContribution Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, fe cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex replace nocons keep(Post iPostTreat) 
+xtreg VatIncrease Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, fe cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
+xtreg MoneyDeposited Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, fe cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
+xtreg TaxCreditBeforeAdjustment Post iPostTreat  iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, fe cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
+xtreg OutputTaxBeforeAdjustment  Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, fe cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
 xtreg ZeroTurnover Post iPostTreat iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5  if TotalCount==5, fe cluster(DealerTIN)
 //outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
+
+
+areg PositiveContribution Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex replace nocons keep(Post iPostTreat) 
+areg VatIncrease Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
+areg MoneyDeposited Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
+areg TaxCreditBeforeAdjustment Post iPostTreat  iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
+areg OutputTaxBeforeAdjustment  Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
+
+
 
 xtreg VatRatio Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5&group!=200, fe cluster(DealerTIN)
 outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRatioRetailWholeSale_TotalCount5_Treat",  tex replace nocons keep(Post iPostTreat) addnote("dropping the 99.5% of CreditRatios")
@@ -733,6 +747,39 @@ xtreg lTaxCreditBeforeAdjustment Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, 
 outreg2 using "H:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_ALL_Treat_LOG",  tex append nocons keep(Post iPostTreat) 
 xtreg lOutputTaxBeforeAdjustment  Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, fe cluster(DealerTIN)
 outreg2 using "H:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_ALL_Treat_LOG",  tex append nocons keep(Post iPostTreat) 
+
+log using "F:\2a2b_analysis\RetailerVsWholeSaler\UnderstandingLogRegressionTopPercentile.log"
+//First we run the regressions for the consistent sample in both logs and means for the top decile treatment and control firms.
+// Point to note is that mean regressions work and the log regression dont
+preserve
+keep if TotalCount==5&lMoneyDeposited!=.&lTaxCreditBeforeAdjustment!=.&lOutputTaxBeforeAdjustment!=.&Treat!=.
+gsort DealerTIN TaxYear
+bys DealerTIN: gen Count2=_N
+keep if Count2==5
+tab TaxYear Treat
+
+xtreg OutputTaxBeforeAdjustment Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, fe cluster(DealerTIN)
+xtreg TaxCreditBeforeAdjustment Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, fe cluster(DealerTIN)
+xtreg MoneyDeposited Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, fe cluster(DealerTIN)
+
+
+xtreg lMoneyDeposited Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, fe cluster(DealerTIN)
+//outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat_LOG_v2",  tex replace nocons keep(Post iPostTreat) 
+xtreg lTaxCreditBeforeAdjustment Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, fe cluster(DealerTIN)
+//outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat_LOG_v2",  tex append nocons keep(Post iPostTreat) 
+xtreg lOutputTaxBeforeAdjustment Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, fe cluster(DealerTIN)
+//outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat_LOG_v2",  tex append nocons keep(Post iPostTreat) 
+
+areg lMoneyDeposited Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat_LOG_v2_areg",  tex replace nocons keep(Post iPostTreat) 
+areg lTaxCreditBeforeAdjustment Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat_LOG_v2_areg",  tex append nocons keep(Post iPostTreat) 
+areg lOutputTaxBeforeAdjustment Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat_LOG_v2_areg",  tex append nocons keep(Post iPostTreat) 
+
+restore 
+
+
 
 //TotalCount!=5
 //TreatAnalysis

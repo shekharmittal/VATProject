@@ -549,28 +549,6 @@ collapse (mean) MoneyDeposited (median) MedMoneyDeposited=MoneyDeposited (p90) p
 twoway (connected p70MoneyDeposited TaxYear if Treat==0) (connected p70MoneyDeposited TaxYear if Treat==1);
 restore;
 
-log using "F:\2a2b_analysis\RetailerVsWholeSaler\UnderstandingLogRegressionTopPercentile.log"
-//First we run the regressions for the consistent sample in both logs and means for the top decile treatment and control firms.
-// Point to note is that mean regressions work and the log regression dont
-preserve
-keep if TotalCount==5&lMoneyDeposited!=.&lTaxCreditBeforeAdjustment!=.&lOutputTaxBeforeAdjustment!=.&Treat!=.
-gsort DealerTIN TaxYear
-bys DealerTIN: gen Count2=_N
-keep if Count2==5
-tab TaxYear Treat
-
-xtreg OutputTaxBeforeAdjustment Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, fe cluster(DealerTIN)
-xtreg TaxCreditBeforeAdjustment Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, fe cluster(DealerTIN)
-xtreg MoneyDeposited Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, fe cluster(DealerTIN)
-
-
-xtreg lMoneyDeposited Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, fe cluster(DealerTIN)
-outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat_LOG_v2",  tex replace nocons keep(Post iPostTreat) 
-xtreg lTaxCreditBeforeAdjustment Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, fe cluster(DealerTIN)
-outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat_LOG_v2",  tex append nocons keep(Post iPostTreat) 
-xtreg lOutputTaxBeforeAdjustment Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5, fe cluster(DealerTIN)
-outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat_LOG_v2",  tex append nocons keep(Post iPostTreat) 
-restore 
 
 //As discussed, when we run the mean regression on always present not good guys, then also the mean regressions work.
 preserve

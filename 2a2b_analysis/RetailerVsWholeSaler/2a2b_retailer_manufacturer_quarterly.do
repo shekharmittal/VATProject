@@ -302,7 +302,7 @@ xtset DealerTIN TaxQuarter
 
 drop Post iPostTreat
 gen Post=0
-replace Post=1 if TaxQuarter>16
+replace Post=1 if TaxQuarter>8
 
 gen iPostTreat=Post*Treat
 
@@ -394,7 +394,7 @@ twoway (connected AvgMoneyDeposited TaxQuarter if Treat2==0) (connected LHS TaxQ
 restore 
 
 log using "F:\2a2b_analysis\RetailerVsWholeSaler\QuarterlyRegressions_TotalCount5.log", replace
-local TaxQuarterDummy "iTaxQuarter2 iTaxQuarter3 iTaxQuarter4 iTaxQuarter5 iTaxQuarter6 iTaxQuarter7 iTaxQuarter8 iTaxQuarter9 iTaxQuarter10 iTaxQuarter11 iTaxQuarter12 iTaxQuarter13 iTaxQuarter14 iTaxQuarter15 iTaxQuarter16 iTaxQuarter17 iTaxQuarter18 iTaxQuarter19"
+local TaxQuarterDummy "iTaxQuarter2 iTaxQuarter3 iTaxQuarter4 iTaxQuarter5 iTaxQuarter6 iTaxQuarter7 iTaxQuarter8 iTaxQuarter10 iTaxQuarter11 iTaxQuarter12 iTaxQuarter13 iTaxQuarter14 iTaxQuarter15 iTaxQuarter16 iTaxQuarter17 iTaxQuarter18 iTaxQuarter19 iTaxQuarter20"
 xtreg PositiveContribution Post iPostTreat `TaxQuarterDummy', fe cluster(DealerTIN)
 outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Quarterly_TotalCount5_Treat",  tex replace nocons keep(Post iPostTreat) 
 xtreg VatIncrease Post iPostTreat `TaxQuarterDummy', fe cluster(DealerTIN)
@@ -405,6 +405,19 @@ xtreg TaxCreditBeforeAdjustment Post iPostTreat `TaxQuarterDummy', fe cluster(De
 outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Quarterly_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
 xtreg OutputTaxBeforeAdjustment Post iPostTreat `TaxQuarterDummy', fe cluster(DealerTIN)
 outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Quarterly_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
+
+
+local TaxQuarterDummy "iTaxQuarter2 iTaxQuarter3 iTaxQuarter4 iTaxQuarter5 iTaxQuarter6 iTaxQuarter7 iTaxQuarter8 iTaxQuarter10 iTaxQuarter11 iTaxQuarter12 iTaxQuarter13 iTaxQuarter14 iTaxQuarter15 iTaxQuarter16 iTaxQuarter17 iTaxQuarter18 iTaxQuarter19 iTaxQuarter20"
+areg PositiveContribution Post iPostTreat `TaxQuarterDummy', absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Quarterly_TotalCount5_Treat_areg",  tex replace nocons keep(Post iPostTreat) 
+areg VatIncrease Post iPostTreat `TaxQuarterDummy', absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Quarterly_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
+areg MoneyDeposited Post iPostTreat `TaxQuarterDummy', absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Quarterly_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
+areg TaxCreditBeforeAdjustment Post iPostTreat `TaxQuarterDummy', absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Quarterly_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
+areg OutputTaxBeforeAdjustment Post iPostTreat `TaxQuarterDummy', absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Quarterly_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
 
 xtreg lMoneyDeposited Post iPostTreat `TaxQuarterDummy', fe cluster(DealerTIN)
 //outreg2 using diffINdiff_MeanAroundCutoff_TotalCount5_Treat.xls, append nocons keep(Post iPostTreat) 
