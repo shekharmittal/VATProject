@@ -205,6 +205,17 @@ gen AllLocal=0
 replace AllLocal=1 if TurnoverCentral==0&TurnoverGross!=0
 
 
+gen K50=0
+replace K50=1 if MoneyDeposited>0&MoneyDeposited<50000
+
+gen K100=0
+replace K100=1 if MoneyDeposited>=50000&MoneyDeposited<100000
+
+gen K200=0
+replace K200=1 if MoneyDeposited>=100000&MoneyDeposited<200000
+
+
+
 /* All firms
 list MoneyDeposited dummy PositiveContribution ZeroTurnover AllCentral AllLocal  TaxYear
 
