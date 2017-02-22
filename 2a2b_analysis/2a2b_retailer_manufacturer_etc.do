@@ -188,7 +188,7 @@ by DealerTIN: replace MonthlyDummy=MonthlyDummy[_n-1] if MonthlyDummy>=.
 drop if QuarterlyDummy==1&MonthlyDummy==1&TaxYear==3
 
 
-collapse (firstnm) WardName (sum) RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxYear)
+collapse (firstnm) WardName (sum)AdjustCSTLiability RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxYear)
 
 gen dummy=1
 
@@ -879,6 +879,17 @@ qreg OutputTaxBeforeAdjustment  Post Treat iPostTreat `TaxQuarterDummy', q(.8)
 outreg2 using diffINdiff_QuantileAroundCutoff_TotalCount5_Treat.xls, append nocons keep(Post iPostTreat) ctitle("OutputTax, Q=0.8")
 
 
+//Looking at the amount of credits, taxes, money etc for the proposal
+gen dummy=1
+preserve
+collapse (count) dummy (sum) AdjustCSTLiability RefundClaimed TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment MoneyDeposited, by(TaxYear)
+replace AdjustCSTLiability=AdjustCSTLiability/1000000000
+replace RefundClaimed=RefundClaimed/1000000000
+replace TaxCreditBeforeAdjustment=TaxCreditBeforeAdjustment/1000
+replace OutputTaxBeforeAdjustment=OutputTaxBeforeAdjustment/1000
+replace MoneyDeposited=MoneyDeposited/1000
+list dummy AdjustCSTLiability RefundClaimed TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment MoneyDeposited TaxYear
+restore
 
 
 /* Analysis of firms that exit vs firms that do not*/
