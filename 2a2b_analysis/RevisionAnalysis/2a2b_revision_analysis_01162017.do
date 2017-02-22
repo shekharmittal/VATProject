@@ -1,14 +1,11 @@
-
-
 //use "PreliminaryAnalysis\returns\form16_data_v3_0901.dta", clear
-
 cd "E:\data"
 use "form16_data_v3_0901.dta", clear
 
 drop if TaxPeriod=="Annual-2012"|TaxPeriod=="First Halfyear-2012"|TaxPeriod=="Second Halfyear-2012"|TaxPeriod=="Apr-2013"|TaxPeriod=="May-2013"
 
 drop Tin T312203 T312202 Frequency T312020 T312021 DealerName DealerAddress DealerTelephone T312028 T312029 T312043 T312044 T312051 T312052 T312057 T312082 T312083 AccountNumber AccountType MICR BankDetails T312092 T312093 T312137 T312138 T312139 T312140 T312141 T312142 T312152 T312153 T312154 T312155 T312156 T312157 T312158 T312159 T312160 T312161 T312162 T312163 T312164 T312165 T312166 T312167
-drop T312104 T312105 T312106 T312107 T312108 T312109 T312110 T312111 T312112 T312113 T312114 T312115 T312116 T312117 T312118 T312119 T312120 T312121 T312122 T312123 T312124 T312125 T312126 T312127 T312128 T312129 T312130 T312131 T312132 T312133 T312134 Name Designation Place Date TDSString Receipt2A2B T312170 T312DF1 T312DF2 T312DF3 T312DF4 T312DF5 T312DF6 T312DF7 T312DF8 T312178 Signatory
+drop T312104 T312105 T312106 T312107 T312108 T312109 T312110 T312111 T312112 T312113 T312114 T312115 T312116 T312117 T312118 T312119 T312120 T312121 T312122 T312123 T312124 T312125 T312126 T312127 T312128 T312129 T312130 T312131 T312132 T312133 T312134 Name Designation Place Date TDSString Receipt2A2B T312170 T312DF5 T312DF6 T312DF7 T312DF8 T312178 Signatory
 
 gen TaxYear=0
 replace TaxYear=1 if TaxPeriod=="Annual-2010"
@@ -137,9 +134,6 @@ label variable PercPurchaseUnregisteredDealer "A measure of amount purchased fro
 label variable TotalValueAdded "Total value added, (TurnoverGross-TotalPurchases)"
 label variable TotalPurchases "Total purchases made: PurchaseCapitalGoods+PurchaseOtherGoods+PurchaseUnregisteredDealer"
 
-gen PositiveContribution=0
-replace PositiveContribution=1 if MoneyDeposited>0
-
 
 gsort DealerTIN TaxYear TaxHalfyear TaxQuarter TaxMonth
 gen AnnualDummy=1 if TaxPeriod=="Annual-2010"|TaxPeriod=="Annual-2011"
@@ -198,14 +192,18 @@ destring id, replace
 
 
 gsort DealerTIN TaxPeriod -id
-by DealerTIN TaxPeriod: gen RevisionCount=_n
-by DealerTIN TaxPeriod: gen TotalRevisionCount=_N
+by DealerTIN TaxPeriod: gen ReturnCount=_n
+by DealerTIN TaxPeriod: gen TotalReturnCount=_N
 
-keep if RevisionCount==1
+keep if ReturnCount==1
+drop ReturnCount
 
-order ApprovalDate, first
+save "E:\data\PreliminaryAnalysis\returns\form16_data_v5_02222017.dta", replace
 
-replace TotalRevisionCount=TotalRevisionCount-1
+
+
+//order ApprovalDate, first
+//replace TotalRevisionCount=TotalRevisionCount-1
 
 drop if TaxPeriod=="Annual-2010"|TaxPeriod=="Annual-2011"|TaxPeriod=="First Halfyear-2010"|TaxPeriod=="First Halfyear-2011"|TaxPeriod=="Second Halfyear-2010"|TaxPeriod=="Second Halfyear-2011"
 
