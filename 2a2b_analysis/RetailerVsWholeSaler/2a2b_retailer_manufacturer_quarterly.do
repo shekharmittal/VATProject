@@ -188,6 +188,7 @@ drop if QuarterlyDummy==1&MonthlyDummy==1&TaxYear==3
 //collapse (sum) RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxYear)
 
 collapse (sum) RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxQuarter)
+drop if TaxQuarter==0
 
 gen ZeroTurnover=0
 replace ZeroTurnover=1 if TurnoverGross==0
@@ -680,6 +681,17 @@ twoway (connected UnTaxProp TaxQuarter if Treat==1) (connected UnTaxProp TaxQuar
 	   title("Proportion of sales by Retailers and Wholesalers");
     restore;
 
+
+#delimit ;
+preserve;
+drop if RTaxProp>200;
+collapse (mean) UnTaxProp RTaxProp, by (TaxQuarter Treat);
+twoway (connected RTaxProp TaxQuarter if Treat==1) (connected RTaxProp TaxQuarter if Treat==0, lpattern(dash))
+       if TaxQuarter>8&TaxQuarter!=12, legend(order(1 "Wholesalers" 2 "Retailers")) 
+	   title("Proportion of sales to Registered Firms") graphregion(color(white));
+    restore;
+	
+	
 	
 #delimit ;
 preserve;

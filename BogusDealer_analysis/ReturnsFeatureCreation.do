@@ -263,3 +263,45 @@ merge 1:1 DealerTIN TaxQuarter using "E:\data\PreliminaryAnalysis\returns\form16
 
 save "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta"
 
+use "E:\data\PreliminaryAnalysis\returns\form16_data_v5_02222017.dta", clear
+gsort DealerTIN TaxQuarter
+drop if TaxQuarter==0
+by DealerTIN TaxQuarter: egen MeanReturnCount=mean(TotalReturnCount)
+by DealerTIN TaxQuarter: gen Count=_n
+keep if Count==1
+replace TotalReturnCount=MeanReturnCount
+keep DealerTIN TaxQuarter TotalReturnCount TotalPurchases PercValueAdded PercPurchaseUnregisteredDealer TotalValueAdded
+isid DealerTIN TaxQuarter
+save "E:\data\PreliminaryAnalysis\returns\form16_data_v5_02222017_ReturnCount.dta", replace
+
+use "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta", clear
+merge 1:1 DealerTIN TaxQuarter using "E:\data\PreliminaryAnalysis\returns\form16_data_v5_02222017_ReturnCount.dta", keepusing(TotalReturnCount TotalPurchases PercValueAdded PercPurchaseUnregisteredDealer TotalValueAdded)
+save "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta", replace
+
+drop _merge
+merge m:1 DealerTIN using "E:\data\PreliminaryAnalysis\BogusDealers\BogusIdentifiedFromOnlineGovernment.dta"
+gen bogus_online=0
+replace bogus_online=1 if Bogus=="YES"
+
+save "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta", replace
+
+import excel "E:\data\PreliminaryAnalysis\BogusDealers\Bogus_CancellationData_NotPresentInT20_verified.xls", sheet("Sheet1") firstrow clear
+drop E F DateofRegistration DealerTIN
+rename Id DealerTIN
+replace Registered="NO" if Registered=="No"
+replace Registered="YES" if Registered=="Yes"|Registered=="yes"
+save "E:\data\PreliminaryAnalysis\BogusDealers\Bogus_CancellationData_NotPresentInT20_verified.dta"
+
+
+
+use "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta", clear
+drop _merge
+merge m:1 DealerTIN using "E:\data\PreliminaryAnalysis\BogusDealers\Bogus_CancellationData_NotPresentInT20_verified.dta"
+drop if _merge==2
+gen bogus_cancellation=0
+replace bogus_cancellation=1 if Registered=="NO"
+
+
+gen bogus_any=bogus_cancellation|bogus_online
+
+save "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta", replace
