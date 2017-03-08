@@ -1,22 +1,25 @@
 //Creating variables for sale and purchase discrepancies
 {
+//Load the purchase side edge list
 use "E:\data\PreliminaryAnalysis\BogusDealers\PurchaseTaxAmount20121314.dta", clear
 
+//Merge the purchase side edge list with Sale side edgelist
 rename DealerTIN x
 rename SellerBuyerTIN DealerTIN
 rename x SellerBuyerTIN
 
 merge 1:1 TaxQuarter DealerTIN SellerBuyerTIN using "E:\data\PreliminaryAnalysis\BogusDealers\SalesTaxAmount20121314.dta"
 
+//For entries which do not merge, replace the missing to zeroes
 replace SalesTaxAmount=0 if SalesTaxAmount==.&_merge==1
 replace PurchaseTaxAmount=0 if PurchaseTaxAmount==.&_merge==2
 
+//Calculate the difference and the measures that we had discussed
 gen DiffTaxAmount=SalesTaxAmount-PurchaseTaxAmount
 gen absDiffTaxAmount=abs(DiffTaxAmount)
 gen maxSalesTaxAmount=max(SalesTaxAmount,PurchaseTaxAmount)
 
-
-//Sales
+//For the sales side
 drop if _merge==1
 
 bys TaxQuarter DealerTIN: egen diff=sum(DiffTaxAmount)
@@ -24,16 +27,20 @@ bys TaxQuarter DealerTIN: egen absdiff=sum(absDiffTaxAmount)
 bys TaxQuarter DealerTIN: egen maxSalesTax=sum(maxSalesTaxAmount)
 bys TaxQuarter DealerTIN: gen Count=_n
 
+//The two measures that we had discussed on the sale side
 gen SaleDiscrepancy=diff/maxSalesTax
 gen absSaleDiscrepancy=absdiff/maxSalesTax
 keep if Count==1
 
 drop SellerBuyerTIN maxSalesTaxAmount absDiffTaxAmount DiffTaxAmount TotalSalesAmount SalesTaxAmount TotalCountSaleTransactions TotalPurchaseAmount PurchaseTaxAmount TotalCountPurchaseTransactions
 
-save "E:\data\PreliminaryAnalysis\BogusDealers\SaleDiscrepancy.dta"
+replace SaleDiscrepancy=0 if SaleDiscrepancy==.
+replace absSaleDiscrepancy=0 if absSaleDiscrepancy==.
+
+save "E:\data\PreliminaryAnalysis\BogusDealers\SaleDiscrepancy.dta", replace
 
 
-//Purchase
+//For the Purchase side
 drop if _merge==2
 
 bys TaxQuarter SellerBuyerTIN: egen diff=sum(DiffTaxAmount)
@@ -41,11 +48,13 @@ bys TaxQuarter SellerBuyerTIN: egen absdiff=sum(absDiffTaxAmount)
 bys TaxQuarter SellerBuyerTIN: egen maxPurchaseTax=sum(maxSalesTaxAmount)
 bys TaxQuarter SellerBuyerTIN: gen Count=_n
 
+//The two measures that we had discussed on the purchase side
 gen PurchaseDiscrepancy=diff/maxPurchaseTax
 gen absPurchaseDiscrepancy=absdiff/maxPurchaseTax
 keep if Count==1
 
 drop Count DealerTIN maxSalesTaxAmount absDiffTaxAmount DiffTaxAmount TotalSalesAmount SalesTaxAmount TotalCountSaleTransactions TotalPurchaseAmount PurchaseTaxAmount TotalCountPurchaseTransactions
+
 replace PurchaseDiscrepancy=0 if PurchaseDiscrepancy==.
 replace absPurchaseDiscrepancy=0 if absPurchaseDiscrepancy==.
 
@@ -68,6 +77,8 @@ rename DealerTIN x
 rename SellerBuyerTIN DealerTIN
 rename x SellerBuyerTIN
 
+//First we are doing these measures for the purchase side
+//Creating counts and measures for different type of merges
 bys TaxQuarter DealerTIN _merge: gen TotalCount=_N
 bys TaxQuarter DealerTIN _merge: gen Count=_n
 bys TaxQuarter DealerTIN _merge: egen TotalPurchaseTaxAmount=sum(PurchaseTaxAmount)
@@ -133,9 +144,7 @@ save "E:\data\PreliminaryAnalysis\BogusDealers\PurchaseDiscrepancyCounts.dta"
 
 }
 
-merge 1:1 TaxQuarter DealerTIN using "E:\data\PreliminaryAnalysis\BogusDealers\PurchaseDiscrepancyCounts.dta", generate(_merge_disc)
-
-
+//Now we repeat calculating these measures for the sales side
 {
 use "E:\data\PreliminaryAnalysis\BogusDealers\SalesTaxAmount20121314.dta", clear
 
@@ -209,7 +218,16 @@ replace SaleMyTaxDiscrepancy=0 if SaleMyTaxDiscrepancy==.
 replace SaleOtherTaxDiscrepancy=0 if SaleOtherTaxDiscrepancy==.
 
 drop SellerBuyerTIN TotalCountPurchaseTransactions PurchaseTaxAmount TotalPurchaseAmount TotalCountSaleTransactions SalesTaxAmount TotalSalesAmount _merge TotalCount TotalPurchaseTaxAmount TotalSalesTaxAmount Count Count2
-
 save "E:\data\PreliminaryAnalysis\BogusDealers\SaleDiscrepancyCounts.dta"
 }
 
+use "E:\data\PreliminaryAnalysis\BogusDealers\SaleDiscrepancyCounts.dta", clear
+merge 1:1 DealerTIN TaxQuarter using "E:\data\PreliminaryAnalysis\BogusDealers\SaleDiscrepancy.dta", generate(_merge_salediscrepancy)
+tab _merge
+save "E:\data\PreliminaryAnalysis\BogusDealers\SaleDiscrepancyAll.dta"
+
+
+use "E:\data\PreliminaryAnalysis\BogusDealers\PurchaseDiscrepancyCounts.dta", clear
+merge 1:1 DealerTIN TaxQuarter using "E:\data\PreliminaryAnalysis\BogusDealers\PurchaseDiscrepancy.dta", generate(_merge_purchasediscrepancy)
+tab _merge
+save "E:\data\PreliminaryAnalysis\BogusDealers\PurchaseDiscrepancyAll.dta"
