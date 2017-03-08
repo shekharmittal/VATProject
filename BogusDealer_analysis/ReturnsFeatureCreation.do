@@ -260,8 +260,10 @@ drop group*
 
 merge 1:1 DealerTIN TaxQuarter using "E:\data\PreliminaryAnalysis\returns\form16_data_v5_02222017.dta", keepusing(TotalReturnCount TotalPurchases PercValueAdded TotalValueAdded PercPurchaseUnregisteredDealer)
 
+gen ZeroTaxCredit=0
+replace ZeroTaxCredit=1 if TaxCreditBeforeAdjustment==0
 
-save "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta"
+save "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta", replace
 
 use "E:\data\PreliminaryAnalysis\returns\form16_data_v5_02222017.dta", clear
 gsort DealerTIN TaxQuarter
@@ -305,3 +307,5 @@ replace bogus_cancellation=1 if Registered=="NO"
 gen bogus_any=bogus_cancellation|bogus_online
 
 save "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta", replace
+
+

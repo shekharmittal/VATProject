@@ -125,6 +125,30 @@ replace DummyTelecom=1 if (regexm(Nature, "TELECOM"))
 replace DummyTelecom=1 if (regexm(Nature, "DTH SERVICE"))
 replace DummyTelecom=1 if (regexm(Nature, "Internet Service Provider"))
 
+drop ExpectedTurnover TurnoverPreviousYear OwnCapital BankLoan PlantAndMachinery LandAndBuilding OtherAssets Boolean201011 Boolean201112 Boolean201213 BooleanCounsel BooleanThirdPartyStorage GTONil201213
+
+replace DummyRetailer=-1 if Nature==""
+replace DummyManufacturer=-1 if Nature==""
+replace DummyWholeSaler=-1 if Nature==""
+replace DummyInterStateSeller=-1 if Nature==""
+replace DummyInterStatePurchaser=-1 if Nature==""
+replace DummyWorkContractor=-1 if Nature==""
+replace DummyImporter=-1 if Nature==""
+replace DummyExporter=-1 if Nature==""
+replace DummyOther=-1 if Nature==""
+replace DummyHotel=-1 if Nature==""
+replace DummyECommerce=-1 if Nature==""
+replace DummyTelecom=-1 if Nature==""
+
+replace Constitution="MISSING INFORMATION" if Constitution==""
+
+replace Ward="-100" if Ward==""
+replace PhysicalWard="-100" if PhysicalWard==""
+replace StartYear=-200 if StartYear==.
+
+replace BooleanRegisteredCE=-200 if BooleanRegisteredCE==.
+replace BooleanRegisteredIEC=-200 if BooleanRegisteredIEC==.
+replace BooleanServiceTax=-200 if BooleanServiceTax==.
 
 save "E:\data\PreliminaryAnalysis\BogusDealers\FeatureDealerProfiles.dta", replace
 
