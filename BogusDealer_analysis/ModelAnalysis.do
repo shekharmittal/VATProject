@@ -1,7 +1,10 @@
+import delimited E:\Ofir\BogusFirmCatching\PredictionsBogusOnline_v2.csv, case(preserve) encoding(UTF-8) clear
+
 import delimited E:\Ofir\BogusFirmCatching\PredictionsBogusOnline.csv, case(preserve) encoding(UTF-8) clear
 
 use "E:\Ofir\BogusFirmCatching\PredictionsBogusOnline.dta", clear
 
+drop v1
 gsort -BogusOnlineModel1 -BogusOnlineModel2
 gen Count=_n
 tab bogus_cancellation if Count<500
@@ -63,11 +66,29 @@ by TaxQuarter: gen QuarterlyRankModelAll=_n
 tab bogus_cancellation  if TaxQuarter==13&QuarterlyRankModelAll<100
 tab bogus_online  if TaxQuarter==13&QuarterlyRankModelAll<100
 
+
+rename RankModel1 OnlineRankModel1
+rename RankModel2 OnlineRankModel2
+rename RankModel3 OnlineRankModel3
+rename RankModel4 OnlineRankModel4
+rename RankModel5 OnlineRankModel5
+rename RankModel6 OnlineRankModel6
+rename RankModel7 OnlineRankModel7
+rename RankModelAll OnlineRankModelAll
+rename QuarterlyRankModel1 OnlineQuarterlyRankModel1
+rename QuarterlyRankModel2 OnlineQuarterlyRankModel2
+rename QuarterlyRankModel3 OnlineQuarterlyRankModel3
+rename QuarterlyRankModel4 OnlineQuarterlyRankModel4
+rename QuarterlyRankModel5 OnlineQuarterlyRankModel5
+rename QuarterlyRankModel6 OnlineQuarterlyRankModel6
+rename QuarterlyRankModel7 OnlineQuarterlyRankModel7
+rename QuarterlyRankModelAll OnlineQuarterRankModelAll
+
 save "E:\Ofir\BogusFirmCatching\PredictionsBogusOnline.dta", replace
 
 
-import delimited E:\Ofir\BogusFirmCatching\PredictionsBogusCancellation.csv, case(preserve) clear
-
+import delimited E:\Ofir\BogusFirmCatching\PredictionsBogusCancellation_v2.csv, case(preserve) clear
+drop v1 v9
 gen ProbabilitySum=BogusCancellationModel1+BogusCancellationModel2+BogusCancellationModel3+BogusCancellationModel4+BogusCancellationModel5+BogusCancellationModel6+BogusCancellationModel7
 
 sum BogusCancellationModel*
@@ -127,7 +148,28 @@ tab bogus_online  if RankModelAll<500
 tab bogus_cancellation  if QuarterlyRankModelAll<100
 tab bogus_online  if QuarterlyRankModelAll<100
 
+rename RankModel1 CancellationRankModel1
+rename RankModel2 CancellationRankModel2
+rename RankModel3 CancellationRankModel3
+rename RankModel4 CancellationRankModel4
+rename RankModel5 CancellationRankModel5
+rename RankModel6 CancellationRankModel6
+rename RankModel7 CancellationRankModel7
+rename RankModelAll CancellationRankModelAll
+rename QuarterlyRankModel1 CancellationQuarterlyRankModel1
+rename QuarterlyRankModel2 CancellationQuarterlyRankModel2
+rename QuarterlyRankModel3 CancellationQuarterlyRankModel3
+rename QuarterlyRankModel4 CancellationQuarterlyRankModel4
+rename QuarterlyRankModel5 CancellationQuarterlyRankModel5
+rename QuarterlyRankModel6 CancellationQuarterlyRankModel6
+rename QuarterlyRankModel7 CancellationQuarterlyRankModel7
+rename QuarterlyRankModelAll CancellationQuarterRankModelAll
+
 save "E:\Ofir\BogusFirmCatching\PredictionsBogusCancellation.dta", replace
+
+
+merge 1:1 DealerTIN TaxQuarter using "E:\Ofir\BogusFirmCatching\PredictionsBogusOnline.dta", keepusing(BogusOnlineModel1 BogusOnlineModel2 BogusOnlineModel3 BogusOnlineModel4 BogusOnlineModel5 BogusOnlineModel6 BogusOnlineModel7 OnlineRankModel1 OnlineRankModel2 OnlineRankModel3 OnlineRankModel4 OnlineRankModel5 OnlineRankModel6 OnlineRankModel7 OnlineQuarterlyRankModel1 OnlineRankModelAll OnlineQuarterlyRankModel2 OnlineQuarterlyRankModel3 OnlineQuarterlyRankModel4 OnlineQuarterlyRankModel5 OnlineQuarterlyRankModel6 OnlineQuarterlyRankModel7 OnlineQuarterRankModelAll)
+
 
 
 //Comparing the Return Features of firms that have high prediction probability
