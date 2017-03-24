@@ -308,4 +308,19 @@ gen bogus_any=bogus_cancellation|bogus_online
 
 save "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta", replace
 
+use "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta", clear
+merge 1:1 DealerTIN TaxQuarter using "E:\data\PreliminaryAnalysis\BogusDealers\FeatureUnRegisteredSaleTransactions.dta", keepusing(RegisteredSalesTax UnregisteredSalesTax) generate(transaction_merge)
+drop if transaction_merge==2
+
+gen UnTaxProp=UnregisteredSalesTax/OutputTaxBeforeAdjustment
+replace UnTaxProp=0 if UnTaxProp==.
+
+save "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta", replace
+
+use "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta"
+merge 1:1 DealerTIN TaxQuarter using "E:\data\PreliminaryAnalysis\BogusDealers\FeatureDownStreamnessSales.dta", keep(master match) generate(salesds_merge)
+merge 1:1 DealerTIN TaxQuarter using "E:\data\PreliminaryAnalysis\BogusDealers\FeatureDownStreamnessPurchases.dta", keep(master match) generate(purchaseds_merge)
+save "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturnsWithDS.dta"
+
+
 

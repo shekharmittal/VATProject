@@ -1,3 +1,5 @@
+import delimited E:\Ofir\BogusFirmCatching\PredictionsBogusOnline_v2_2012_OnlyY3.csv, case(preserve) encoding(UTF-8) clear
+
 import delimited E:\Ofir\BogusFirmCatching\PredictionsBogusOnline_v2.csv, case(preserve) encoding(UTF-8) clear
 
 import delimited E:\Ofir\BogusFirmCatching\PredictionsBogusOnline.csv, case(preserve) encoding(UTF-8) clear
@@ -84,7 +86,7 @@ rename QuarterlyRankModel6 OnlineQuarterlyRankModel6
 rename QuarterlyRankModel7 OnlineQuarterlyRankModel7
 rename QuarterlyRankModelAll OnlineQuarterRankModelAll
 
-save "E:\Ofir\BogusFirmCatching\PredictionsBogusOnline.dta", replace
+save "E:\Ofir\BogusFirmCatching\PredictionsBogusOnline_v2_2013.dta", replace
 
 
 import delimited E:\Ofir\BogusFirmCatching\PredictionsBogusCancellation_v2.csv, case(preserve) clear
@@ -176,6 +178,8 @@ merge 1:1 DealerTIN TaxQuarter using "E:\Ofir\BogusFirmCatching\PredictionsBogus
 tostring DealerTIN, replace
 merge 1:1 DealerTIN TaxQuarter using "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta", generate(_merge_returns)
 drop if _merge_returns!=3
+
+merge m:1 DealerTIN using "E:\data\PreliminaryAnalysis\BogusDealers\FeatureDealerProfiles.dta", generate(_merge_profiles)
 
 
 sum TurnoverGross MoneyDeposited if RankModelAll<500
