@@ -1,3 +1,7 @@
+import delimited E:\Ofir\BogusFirmCatching\PredictionsBogusOnline_DifferentModels.csv, case(preserve) clear
+
+import delimited E:\Ofir\BogusFirmCatching\PredictionsBogusOnline_v2_2012_OnlyY3.csv, case(preserve) encoding(UTF-8) clear
+
 import delimited E:\Ofir\BogusFirmCatching\PredictionsBogusOnline_v2_2012_OnlyY3.csv, case(preserve) encoding(UTF-8) clear
 
 import delimited E:\Ofir\BogusFirmCatching\PredictionsBogusOnline_v2.csv, case(preserve) encoding(UTF-8) clear
@@ -175,6 +179,10 @@ merge 1:1 DealerTIN TaxQuarter using "E:\Ofir\BogusFirmCatching\PredictionsBogus
 
 
 //Comparing the Return Features of firms that have high prediction probability
+bys DealerTIN TaxQuarter: gen Count=_N
+br if Count>1
+drop if Count>1
+
 tostring DealerTIN, replace
 merge 1:1 DealerTIN TaxQuarter using "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta", generate(_merge_returns)
 drop if _merge_returns!=3
@@ -201,3 +209,9 @@ gen Diff=MaxRank-MeanRank
 sum Diff if DealerCount==1
 sum Diff if DealerCount==1,detail
 br if Diff>100000
+
+
+replace TurnoverGross=TurnoverGross/1000000
+replace MoneyDeposited=MoneyDeposited/1000000
+replace TaxCreditBeforeAdjustment=TaxCreditBeforeAdjustment/1000000
+replace OutputTaxBeforeAdjustment=OutputTaxBeforeAdjustment/1000000
