@@ -160,7 +160,6 @@ label values TaxQuarter quarter
 label define prediction 1 "1-400" 2 "401-800" 3 "801-1200" 4 "1201-1600" 5 "1601-2500" 6 "Rest"
 
 
-
 gen dummy=1
 gen prediction=0
 replace prediction=1 if OnlineQuarterlyRankModel7<=50
@@ -593,3 +592,222 @@ collapse (mean) UnTaxProp (sum) TaxCreditBeforeAdjustment OutputTaxBeforeAdjustm
 twoway (connected TaxCreditBeforeAdjustment TaxQuarter, lpattern(dash)) (connected OutputTaxBeforeAdjustment TaxQuarter, lpattern(dash_dot)) (connected UnTaxProp TaxQuarter, lpattern(dash_3dot) yaxis(2)) if bogus_cancellation==1
 restore
 
+//Plotting VARIMPs
+{
+gen sc_disc=((SaleMyCountDiscrepancy>0)+(SaleMyCountDiscrepancy>.05)+(SaleMyCountDiscrepancy>.33)+(SaleMyCountDiscrepancy>.66)+(SaleMyCountDiscrepancy==1))
+
+gen mpp_disc=((MaxPurchaseProp>0.1)+(MaxPurchaseProp>.393)+(MaxPurchaseProp>.594)+(MaxPurchaseProp>.926))
+
+replace pr_disc=((Purchases_pagerank>.16)+(Purchases_pagerank>.319089)+(Purchases_pagerank>.785434)+(Purchases_pagerank>1.43544)+(Purchases_pagerank>4.86127))
+replace pr_disc=. if Purchases_pagerank==.
+tab pr_disc bogus_online, row
+
+gen pdp_disc=((PurchaseDSUnTaxProp>.0014)+(PurchaseDSUnTaxProp>.0339)+(PurchaseDSUnTaxProp>0.1449898)+(PurchaseDSUnTaxProp>0.34))
+
+
+drop if TaxQuarter==12
+drop if TaxQuarter>16
+
+label define decile 1 "1st decile" 2 "2nd decile" 3 "3rd decile" 4 "4th decile" 5 "5th decile" 6 "6th decile" 7 "7th decile" 8 "8th decile" 9 "9th decile" 10 "10th decile"
+
+
+xtile decile_SaleMyCountDiscrepancy=SaleMyCountDiscrepancy, nq(10)	
+label values decile_SaleMyCountDiscrepancy decile
+
+xtile decile_PurchaseDSUnTaxProp=PurchaseDSUnTaxProp, nq(10)
+label values decile_PurchaseDSUnTaxProp decile
+
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_PurchaseDSUnTaxProp) graphregion(color(white))
+               title("Percentage sales made to unregistered firms, by DS Purchase firms") ytitle("Probability of being bogus") 
+			   bar(1, fcolor(navy) fintensity(inten50))
+               note ("Firms grouped in deciles(10%) of percentage sales made to unregistered firms, by the firms current firm is purchasing from");
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\PurchaseDSUnTaxProp.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\PurchaseDSUnTaxProp.pdf", as(pdf) replace;
+
+
+xtile decile_PurchaseDSCreditRatio=PurchaseDSCreditRatio, nq(10)
+label values decile_PurchaseDSCreditRatio decile
+
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_PurchaseDSCreditRatio) graphregion(color(white))
+               title("Ratio of credit claimed to turnover, by DS Purchase firms") ytitle("Probability of being bogus") 
+			   bar(1, fcolor(navy) fintensity(inten50))
+               note ("Firms grouped in deciles(10%) of ratio of credit claimed to turnover, by the firms current firm is purchasing from");
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\PurchaseDSCreditRatio.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\PurchaseDSCreditRatio.pdf", as(pdf) replace;
+
+
+
+
+xtile decile_PurchaseDSVatRatio=PurchaseDSVatRatio, nq(10)
+label values decile_PurchaseDSVatRatio decile
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_PurchaseDSVatRatio) graphregion(color(white))
+               title("Ratio of VAT deposited to turnover, by DS Purchase firms") ytitle("Probability of being bogus") 
+			   bar(1, fcolor(navy) fintensity(inten50))
+               note ("Firms grouped in deciles(10%) of ratio of VAT deposited to turnover, by the firms current firm is purchasing from");
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\PurchaseDSVatRatio.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\PurchaseDSVatRatio.pdf", as(pdf) replace;
+
+
+
+xtile decile_Purchases_pagerank=Purchases_pagerank, nq(10)
+label values decile_Purchases_pagerank decile
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_Purchases_pagerank) graphregion(color(white))
+               title("Pagerank (purchases)") ytitle("Probability of being bogus") 
+			   note ("Firms grouped in deciles(10%) of pagerank from the purchased from data (2A)")
+			   bar(1, fcolor(navy) fintensity(inten50));
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Purchases_pagerank.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Purchases_pagerank.pdf", as(pdf) replace
+
+
+xtile decile_Sales_pagerank=Sales_pagerank, nq(10)
+label values decile_Sales_pagerank decile
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_Sales_pagerank) graphregion(color(white))
+          title("Pagerank (sales)") ytitle("Probability of being bogus") bar(1, fcolor(navy) fintensity(inten50))
+		note ("Firms grouped in deciles(10%) of pagerank from sales data");
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Sales_pagerank.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Sales_pagerank.pdf", as(pdf) replace;
+
+xtile decile_VatRatio=VatRatio, nq(10)
+label values decile_VatRatio decile
+
+#delimit;
+graph bar (mean) bogus_online, over(decile_VatRatio) graphregion(color(white))
+               title("Ratio of money deposited to turnover") ytitle("Probability of being bogus") bar(1, fcolor(navy) fintensity(inten50))
+			   note ("Firms grouped in deciles(10%) of ratio of money deposited to turnover") ;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\VatRatio.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\VatRatio.pdf", as(pdf) replace;
+
+
+xtile decile_CreditRatio=CreditRatio, nq(10)
+label values decile_CreditRatio decile
+
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_CreditRatio) graphregion(color(white))
+               title("Ratio of credit claimed to turnover") ytitle("Probability of being bogus") bar(1, fcolor(navy) fintensity(inten50))
+			   note ("Firms grouped in deciles(10%) of ratio of credit claimed to turnover") ;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\CreditRatio.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\CreditRatio.pdf", as(pdf) replace;
+
+
+xtile decile_MaxSalesProp=MaxSalesProp, nq(10)
+label values decile_MaxSalesProp decile
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_MaxSalesProp) graphregion(color(white))
+               title("Ratio of largest sale made to 1 firm") ytitle("Probability of being bogus") bar(1, fcolor(navy) fintensity(inten50))
+			   note ("Firms grouped in deciles(10%) of ratio of largest sale made to 1 firm") ;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\MaxSalesProp.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\MaxSalesProp.pdf", as(pdf) replace;
+
+
+
+xtile decile_MaxPurchaseProp=MaxPurchaseProp, nq(10)  
+label values decile_MaxPurchaseProp decile
+
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_MaxPurchaseProp) graphregion(color(white))
+               title("Ratio of largest purchase made from 1 firm") ytitle("Probability of being bogus") bar(1, fcolor(navy) fintensity(inten50))
+			   note ("Firms grouped in deciles(10%) of ratio of largest purchase made from 1 firm") ;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\MaxPurchaseProp.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\MaxPurchaseProp.pdf", as(pdf) replace;
+
+
+xtile decile_TotalBuyers=TotalBuyers, nq(10)
+label values decile_TotalBuyers decile
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_TotalBuyers) graphregion(color(white))
+               title("Number of firms buying from the current firm") ytitle("Probability of being bogus") bar(1, fcolor(navy) fintensity(inten50))
+			   note ("Firms grouped in deciles(10%) of number of buyers") ;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\TotalBuyers.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\TotalBuyers.pdf", as(pdf) replace;
+
+
+xtile decile_TotalSellers=TotalSellers, nq(10)  
+label values decile_TotalSellers decile
+
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_TotalSellers) graphregion(color(white))
+               title("Number of selling firms") ytitle("Probability of being bogus") bar(1, fcolor(navy) fintensity(inten50))
+			   note ("Firms grouped in deciles(10%) of number of sellers to the current firms") ;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\TotalSellers.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\TotalSellers.pdf", as(pdf) replace;
+
+
+
+xtile decile_SalesDSVatRatio=SalesDSVatRatio, nq(10)
+label values decile_SalesDSVatRatio decile
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_SalesDSVatRatio) graphregion(color(white))
+               title("VAT deposited over turnover, by DS Sales firms") ytitle("Probability of being bogus") 
+			   bar(1, fcolor(navy) fintensity(inten50))
+			   note ("Firms grouped in deciles(10%) of ratio of VAT deposited to turnover, by the firms current firm is selling to");
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\SalesDSVatRatio.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\SalesDSVatRatio.pdf", as(pdf) replace;
+
+
+
+xtile decile_SalesDSCreditRatio=SalesDSCreditRatio, nq(10)
+label values decile_SalesDSCreditRatio decile
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_SalesDSCreditRatio) graphregion(color(white))
+               title("Credit claimed over turnover, by DS Sales firms") ytitle("Probability of being bogus") 
+			   bar(1, fcolor(navy) fintensity(inten50))
+			   note ("Firms grouped in deciles(10%) of ratio of credit to turnover, by the firms current firm is selling to");
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\SalesDSCreditRatio.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\SalesDSCreditRatio.pdf", as(pdf) replace;
+
+
+
+xtile decile_SalesDSUnTaxProp=SalesDSUnTaxProp, nq(10)
+label values decile_SalesDSUnTaxProp decile
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_SalesDSUnTaxProp) graphregion(color(white))
+               title("Percentage sales made to unregistered firms, by DS Sales firms") ytitle("Probability of being bogus") 
+			   bar(1, fcolor(navy) fintensity(inten50))
+			   note ("Firms grouped in deciles(10%) of sales made to unregistered firms, by the firms current firm is selling to");
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\SalesDSUnTaxProp.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\SalesDSUnTaxProp.pdf", as(pdf) replace;
+
+
+
+xtile decile_UnTaxProp=UnTaxProp, nq(10)
+label values decile_UnTaxProp decile
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_UnTaxProp) graphregion(color(white))
+               title("Percentage sales made to unregistered firms") ytitle("Probability of being bogus") bar(1, fcolor(navy) fintensity(inten50))
+			   note ("Firms grouped in deciles(10%) of sales made to unregistered firms") ;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\UnTaxProp.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\UnTaxProp.pdf", as(pdf) replace
+
+
+
+xtile decile_TotalReturnCount=TotalReturnCount, nq(10)
+label values decile_TotalReturnCount decile
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_TotalReturnCount) graphregion(color(white))
+               title("Return Revision") ytitle("Probability of being bogus") bar(1, fcolor(navy) fintensity(inten50))
+			   note ("Firms grouped in deciles(10%) of revising returns") ;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\TotalReturnCount.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\TotalReturnCount.pdf", as(pdf) replace;
+
+
+}
