@@ -157,7 +157,7 @@ merge 1:1 TaxQuarter DealerTIN using "E:\Ofir\BogusFirmCatching\PredictionsBogus
 
 label define quarter 1 "Q1, 2010-11" 2 "Q2, 2010-11" 3 "Q3, 2010-11" 4 "Q4, 2010-11" 5 "Q1, 2011-12" 6 "Q2, 2011-12" 7 "Q3, 2011-12" 8 "Q4, 2011-12" 9 "Q1, 2012-13" 10 "Q2, 2012-13" 11 "Q3, 2012-13" 12 "Q4, 2012-13" 13 "Q1, 2013-14" 14 "Q2, 2013-14" 15 "Q3, 2013-14" 16 "Q4, 2013-14" 17 "Q1, 2014-15" 18 "Q2, 2014-15" 19 "Q3, 2014-15" 20 "Q4, 2014-15"
 label values TaxQuarter quarter
-label define prediction 1 "1-400" 2 "401-800" 3 "801-1200" 4 "1201-1600" 5 "1601-2500" 6 "Rest"
+label define prediction 1 "1-400" 2 "401-800" 3 "801-1200" 4 "1201-1600" 5 "1601-2400" 6 "Rest"
 
 
 gen dummy=1
@@ -167,6 +167,11 @@ replace prediction=2 if OnlineQuarterlyRankModel7<=100&OnlineQuarterlyRankModel7
 replace prediction=3 if OnlineQuarterlyRankModel7<=150&OnlineQuarterlyRankModel7>100
 replace prediction=4 if OnlineQuarterlyRankModel7<=200&OnlineQuarterlyRankModel7>150
 replace prediction=5 if OnlineQuarterlyRankModel7<=300&OnlineQuarterlyRankModel7>200
+
+replace prediction=. if OnlineQuarterlyRankModel7==.
+replace prediction=6 if prediction==0
+
+
 
 label values prediction prediction
 *xlabel(, valuelabel)
@@ -185,14 +190,39 @@ graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\TaxCredits_prediction
 graph export "E:\data\PreliminaryAnalysis\BogusDealers\TaxCredits_predictions_BogusOnlineModel7.pdf", as(pdf) replace
 
 
+
 #delimit ;
-graph bar (mean) bogus_online (mean) bogus_cancellation (mean) bogus_any 
+graph bar (mean) bogus_online (mean) bogus_cancellation (mean) bogus_any (mean) CancelledDummy 
           if prediction>0&TaxQuarter<17, 
 		  over(prediction) graphregion(color(white)) 
-		  legend(order(1 "From bogus data" 2 "From cancellation records" 3 "Combined set"))
+		  legend(order(1 "From bogus data" 2 "From cancellation records" 3 "Combined set" 4 "Entire cancellation data" ))
 		  title("Definite success rate") blabel(bar)
+		  bar(1, fintensity(inten50))
+		  bar(2, fintensity(inten10))
 		  note("Based on simulation data, if we inspect companies the proportion that is definitely bogus. Lower bound, others could be bogus as well");
 
+
+merge m:1 DealerTIN using "E:\data\PreliminaryAnalysis\Cancellation\CancellationData_UniqueDealerTIN.dta", generate(_merge_cancellation)
+gen CancelledDummy=0
+replace CancelledDummy=1 if _merge_cancellation==3
+		  
+
+//The fact that we are not using tax quarter 12's data is taken care of by the if
+// condtion that prediction was has to be greater than 0		  
+#delimit ;
+graph bar (mean) bogus_online (mean) CancelledDummy 
+          if prediction>0&TaxQuarter<17, 
+		  over(prediction) graphregion(color(white)) 
+		  legend(order(1 "From bogus data" 2 "Entire cancellation data" ))
+		  title("Definite success rate") blabel(bar)
+		  bar(1, fintensity(inten50))
+		  bar(2, fintensity(inten10))
+		  note("Based on simulation data""If we inspect companies the proportion that is definitely bogus or gets cancelled" "Cancellation can be for any reason");
+
+
+		  
+		  
+		  
 graph bar (sum) bogus_online (sum) bogus_cancellation (sum) bogus_any (sum) dummy if prediction>0&TaxQuarter<17, over(prediction)
 
 
@@ -594,6 +624,38 @@ restore
 
 //Plotting VARIMPs
 {
+
+
+use "FeatureReturns.dta", clear
+gen RefundClaimedBoolean=RefundClaimed>0
+
+destring DealerTIN, replace 
+destring TaxQuarter, replace
+
+merge m:1 DealerTIN using "NumericFeatureDealerProfiles.dta", keep(master match) generate(profile_merge)
+
+keep if TaxQuarter>8
+
+merge m:1 DealerTIN TaxQuarter using "NumericSaleDiscrepancyAll.dta", keep(master match) generate(salesmatch_merge)
+
+merge m:1 DealerTIN TaxQuarter using "NumericPurchaseDiscrepancyAll.dta", keep(master match) generate(purchasematch_merge)
+
+merge m:1 DealerTIN TaxQuarter using "SalesNetworkQuarter.dta", keep(master match) generate(salesnetwork_merge)
+
+merge m:1 DealerTIN TaxQuarter using "PurchaseNetworkQuarter.dta", keep(master match) generate(purchasenetwork_merge)
+
+merge m:1 DealerTIN TaxQuarter using "NumericFeatureDownStreamnessSales.dta", keep(master match) generate(salesds_merge)
+
+merge m:1 DealerTIN TaxQuarter using "NumericFeatureDownStreamnessPurchases.dta", keep(master match) generate(purchaseds_merge)
+
+
+replace TurnoverGross=TurnoverGross/10000000
+replace MoneyDeposited=MoneyDeposited/10000000
+replace TaxCreditBeforeAdjustment=TaxCreditBeforeAdjustment/10000000
+replace OutputTaxBeforeAdjustment=OutputTaxBeforeAdjustment/10000000
+
+
+/*
 gen sc_disc=((SaleMyCountDiscrepancy>0)+(SaleMyCountDiscrepancy>.05)+(SaleMyCountDiscrepancy>.33)+(SaleMyCountDiscrepancy>.66)+(SaleMyCountDiscrepancy==1))
 
 gen mpp_disc=((MaxPurchaseProp>0.1)+(MaxPurchaseProp>.393)+(MaxPurchaseProp>.594)+(MaxPurchaseProp>.926))
@@ -603,7 +665,7 @@ replace pr_disc=. if Purchases_pagerank==.
 tab pr_disc bogus_online, row
 
 gen pdp_disc=((PurchaseDSUnTaxProp>.0014)+(PurchaseDSUnTaxProp>.0339)+(PurchaseDSUnTaxProp>0.1449898)+(PurchaseDSUnTaxProp>0.34))
-
+*/
 
 drop if TaxQuarter==12
 drop if TaxQuarter>16
@@ -625,6 +687,24 @@ graph bar (mean) bogus_online, over(decile_PurchaseDSUnTaxProp) graphregion(colo
                note ("Firms grouped in deciles(10%) of percentage sales made to unregistered firms, by the firms current firm is purchasing from");
 graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\PurchaseDSUnTaxProp.gph";
 graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\PurchaseDSUnTaxProp.pdf", as(pdf) replace;
+
+
+#delimit ;
+preserve;
+bys decile_PurchaseDSUnTaxProp: gen Count=_n;
+bys decile_PurchaseDSUnTaxProp: egen Probability= mean(bogus_online);
+gen OddsRatio=Probability/(1-Probability);
+egen OverallProb=mean(bogus_online);
+gen OverallOddsRatio=OverallProb/(1-OverallProb);
+gen Likelihood=OddsRatio/OverallOddsRatio;
+keep if Count==1;
+graph bar (mean) Likelihood, over(decile_PurchaseDSUnTaxProp) graphregion(color(white))
+               title("Percentage sales made to unregistered firms, by DS Purchase firms") ytitle("Likelihood of being bogus") 
+			   bar(1, fcolor(navy) fintensity(inten50))
+               note ("Firms grouped in deciles(10%) of percentage sales made to unregistered firms, by the firms current firm is purchasing from");
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Likelihood_PurchaseDSUnTaxProp.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Likelihood_PurchaseDSUnTaxProp.pdf", as(pdf) replace;
+restore;
 
 
 xtile decile_PurchaseDSCreditRatio=PurchaseDSCreditRatio, nq(10)
@@ -655,6 +735,25 @@ graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\PurchaseDSVatRatio
 
 
 
+#delimit ;
+preserve;
+bys decile_PurchaseDSVatRatio: gen Count=_n;
+bys decile_PurchaseDSVatRatio: egen Probability= mean(bogus_online);
+gen OddsRatio=Probability/(1-Probability);
+egen OverallProb=mean(bogus_online);
+gen OverallOddsRatio=OverallProb/(1-OverallProb);
+gen Likelihood=OddsRatio/OverallOddsRatio;
+keep if Count==1;
+graph bar (mean) Likelihood, over(decile_PurchaseDSVatRatio) graphregion(color(white))
+               title("Ratio of VAT deposited to turnover, by DS Purchase firms") ytitle("Likelihood of being bogus") 
+			   bar(1, fcolor(navy) fintensity(inten50))
+               note ("Firms grouped in deciles(10%) of ratio of VAT deposited to turnover, by the firms current firm is purchasing from");
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Likelihood_PurchaseDSVatRatio.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Likelihood_PurchaseDSVatRatio.pdf", as(pdf) replace;
+restore;
+
+
+
 xtile decile_Purchases_pagerank=Purchases_pagerank, nq(10)
 label values decile_Purchases_pagerank decile
 
@@ -665,6 +764,25 @@ graph bar (mean) bogus_online, over(decile_Purchases_pagerank) graphregion(color
 			   bar(1, fcolor(navy) fintensity(inten50));
 graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Purchases_pagerank.gph";
 graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Purchases_pagerank.pdf", as(pdf) replace
+
+
+
+#delimit ;
+preserve;
+bys decile_Purchases_pagerank: gen Count=_n;
+bys decile_Purchases_pagerank: egen Probability= mean(bogus_online);
+gen OddsRatio=Probability/(1-Probability);
+egen OverallProb=mean(bogus_online);
+gen OverallOddsRatio=OverallProb/(1-OverallProb);
+gen Likelihood=OddsRatio/OverallOddsRatio;
+keep if Count==1;
+graph bar (mean) Likelihood, over(decile_Purchases_pagerank) graphregion(color(white))
+               title("Pagerank (purchases)") ytitle("Likelihood of being bogus") 
+			   note ("Firms grouped in deciles(10%) of pagerank from the purchased from data (2A)")
+			   bar(1, fcolor(navy) fintensity(inten50));
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Likelihood_Purchases_pagerank.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Likelihood_Purchases_pagerank.pdf", as(pdf) replace
+restore;
 
 
 xtile decile_Sales_pagerank=Sales_pagerank, nq(10)
@@ -688,6 +806,25 @@ graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\VatRatio.gph";
 graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\VatRatio.pdf", as(pdf) replace;
 
 
+
+#delimit ;
+preserve;
+bys decile_VatRatio: gen Count=_n;
+bys decile_VatRatio: egen Probability= mean(bogus_online);
+gen OddsRatio=Probability/(1-Probability);
+egen OverallProb=mean(bogus_online);
+gen OverallOddsRatio=OverallProb/(1-OverallProb);
+gen Likelihood=OddsRatio/OverallOddsRatio;
+keep if Count==1;
+graph bar (mean) Likelihood, over(decile_VatRatio) graphregion(color(white))
+               title("Ratio of money deposited to turnover") ytitle("Likelihood of being bogus") 
+			   bar(1, fcolor(navy) fintensity(inten50))
+               note ("Firms grouped in deciles(10%) of ratio of money deposited to turnover") ;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Likelihood_VatRatio.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Likelihood_VatRatio.pdf", as(pdf) replace;
+restore;
+
+
 xtile decile_CreditRatio=CreditRatio, nq(10)
 label values decile_CreditRatio decile
 
@@ -709,6 +846,16 @@ graph bar (mean) bogus_online, over(decile_MaxSalesProp) graphregion(color(white
 			   note ("Firms grouped in deciles(10%) of ratio of largest sale made to 1 firm") ;
 graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\MaxSalesProp.gph";
 graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\MaxSalesProp.pdf", as(pdf) replace;
+
+xtile decile_InterstateRatio=InterstateRatio, nq(10)  
+label values decile_InterstateRatio decile
+
+#delimit ;
+graph bar (mean) bogus_online, over(decile_InterstateRatio) graphregion(color(white))
+               title("Proportion of inter state sales") ytitle("Probability of being bogus") bar(1, fcolor(navy) fintensity(inten50))
+			   note ("Firms grouped in deciles(10%) of ratio of central turnover to total turnover") ;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\InterstateRatio.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\InterstateRatio.pdf", as(pdf) replace;
 
 
 
@@ -760,6 +907,24 @@ graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\SalesDSVatRati
 graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\SalesDSVatRatio.pdf", as(pdf) replace;
 
 
+#delimit ;
+preserve;
+bys decile_SalesDSVatRatio: gen Count=_n;
+bys decile_SalesDSVatRatio: egen Probability= mean(bogus_online);
+gen OddsRatio=Probability/(1-Probability);
+egen OverallProb=mean(bogus_online);
+gen OverallOddsRatio=OverallProb/(1-OverallProb);
+gen Likelihood=OddsRatio/OverallOddsRatio;
+keep if Count==1;
+graph bar (mean) Likelihood, over(decile_SalesDSVatRatio) graphregion(color(white))
+               title("VAT deposited over turnover, by DS Sales firms") ytitle("Likelihood of being bogus") 
+			   bar(1, fcolor(navy) fintensity(inten50))
+			   note ("Firms grouped in deciles(10%) of ratio of VAT deposited to turnover, by the firms current firm is selling to");
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Likelhihood_SalesDSVatRatio.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Likelihood_SalesDSVatRatio.pdf", as(pdf) replace;
+restore;
+
+
 
 xtile decile_SalesDSCreditRatio=SalesDSCreditRatio, nq(10)
 label values decile_SalesDSCreditRatio decile
@@ -797,6 +962,23 @@ graph bar (mean) bogus_online, over(decile_UnTaxProp) graphregion(color(white))
 graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\UnTaxProp.gph";
 graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\UnTaxProp.pdf", as(pdf) replace
 
+
+
+#delimit ;
+preserve;
+bys decile_UnTaxProp: gen Count=_n;
+bys decile_UnTaxProp: egen Probability= mean(bogus_online);
+gen OddsRatio=Probability/(1-Probability);
+egen OverallProb=mean(bogus_online);
+gen OverallOddsRatio=OverallProb/(1-OverallProb);
+gen Likelihood=OddsRatio/OverallOddsRatio;
+keep if Count==1;
+graph bar (mean) Likelihood, over(decile_UnTaxProp) graphregion(color(white))
+               title("Percentage sales made to unregistered firms") ytitle("Likelihood of being bogus") bar(1, fcolor(navy) fintensity(inten50))
+			   note ("Firms grouped in deciles(10%) of sales made to unregistered firms") ;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Likelihood_UnTaxProp.gph";
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\VarImp\Likelihood_UnTaxProp.pdf", as(pdf) replace;
+restore;
 
 
 xtile decile_TotalReturnCount=TotalReturnCount, nq(10)
