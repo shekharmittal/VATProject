@@ -250,6 +250,9 @@ gen dummy=1
 
 replace TurnoverGross=TurnoverGross/1000
 replace TurnoverLocal=TurnoverLocal/1000
+replace MoneyDeposited=MoneyDeposited/1000
+replace OutputTaxBeforeAdjustment=OutputTaxBeforeAdjustment/1000
+replace TaxCreditBeforeAdjustment=TaxCreditBeforeAdjustment/1000
 
 
 xtile group=CreditRatio, nq(200)
@@ -272,9 +275,6 @@ graph combine "F:\2a2b_analysis\PostAnalysis\BarsForAlwaysPresentFirms.gph" "F:\
 graph export "F:\2a2b_analysis\PostAnalysis\BarsCombined.pdf", as(pdf) replace
 
 
-replace MoneyDeposited=MoneyDeposited/1000
-replace OutputTaxBeforeAdjustment=OutputTaxBeforeAdjustment/1000
-replace TaxCreditBeforeAdjustment=TaxCreditBeforeAdjustment/1000
 
 preserve
 keep if TotalCount==5
@@ -283,6 +283,25 @@ twoway (connected MoneyDeposited TaxYear), title("Total VAT Deposited (for alway
 restore
 graph save Graph "F:\2a2b_analysis\PostAnalysis\TotaVATDeposited_TotalCount5.gph"
 graph export "F:\2a2b_analysis\PostAnalysis\TotaVATDeposited_TotalCount5.pdf", as(pdf) replace
+
+#delimit ;
+preserve;
+keep if TotalCount==5;
+collapse (mean) MoneyDeposited TaxCreditBeforeAdjustment (count) Dummy , by(TaxYear);
+twoway (connected MoneyDeposited TaxYear), 
+    title("Mean VAT Deposited (for always present firms)") 
+	note("Amount in million rupees. Number of firms:148434. Matching started after year 2") 
+	xline(2) 
+	ytitle("VAT deposited (in million rupees)") 
+	graphregion(color(white));
+restore;
+graph save Graph "F:\2a2b_analysis\PostAnalysis\MeanVATDeposited_TotalCount5.gph"
+graph export "F:\2a2b_analysis\PostAnalysis\MeanVATDeposited_TotalCount5.pdf", as(pdf) replace
+
+
+//(connected RTaxProp TaxQuarter if Treat==1) (connected RTaxProp TaxQuarter if Treat==0, lpattern(dash))
+//       if TaxQuarter>8&TaxQuarter!=12, 
+//	   title("Proportion of sales to Registered Firms") ;
 
 
 preserve
@@ -293,6 +312,21 @@ restore
 graph save Graph "F:\2a2b_analysis\PostAnalysis\TotaVATDeposited_ALL.gph"
 graph export "F:\2a2b_analysis\PostAnalysis\TotaVATDeposited_ALL.pdf", as(pdf) replace
 
+#delimit ;
+preserve;
+collapse (mean) MoneyDeposited TaxCreditBeforeAdjustment (count) Dummy , by(TaxYear);
+replace Dummy=Dummy/1000;
+twoway (connected MoneyDeposited TaxYear) (connected Dummy TaxYear, yaxis(2) lpattern(dash)) , 
+	title("Mean VAT Deposited (for all firms)") 
+	note("Amount in million rupees. Matching started after year 2") 
+	xline(2) 
+	ytitle("VAT deposited (in million rupees)")
+	ytitle("Number of firms (in thousands)", axis(2))
+	legend(order(1 "Mean VAT deposited" 2 "Number of firms")) 
+	graphregion(color(white));
+restore;
+graph save Graph "F:\2a2b_analysis\PostAnalysis\MeanVATDeposited_ALL.gph"
+graph export "F:\2a2b_analysis\PostAnalysis\MeanVATDeposited_ALL.pdf", as(pdf) replace
 
 
 graph bar (sum) TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment MoneyDeposited, over(TaxYear) legend(order(1 "TaxCredits" 2 "Output Tax" 3 "Vat Deposited")) note("Numbers in million rupees") title ("Post Analysis (Means), For all firms")
