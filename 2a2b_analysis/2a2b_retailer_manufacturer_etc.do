@@ -479,7 +479,8 @@ gen LocalTaxRatio=OutputTaxBeforeAdjustment/TurnoverLocal
 
 gen Treat=0 if DummyRetailer==1&DummyWholeSaler==0&DummyManufacturer==0
 replace Treat=1 if DummyRetailer==0&DummyWholeSaler==1&DummyManufacturer==0
-replace Treat=2 if DummyRetailer==0&DummyWholeSaler==0&DummyManufacturer==1
+
+*replace Treat=2 if DummyRetailer==0&DummyWholeSaler==0&DummyManufacturer==1
 
 
 
@@ -536,14 +537,59 @@ twoway (function y=x ,range(0 1))(line gMoney pMoney, sort lpattern(dash_3dot)) 
 restore
 
 
+#delimit ;
+preserve;
+keep if TotalCount==5;
+collapse (sum) MoneyDeposited (mean) AvgMoneyDeposited=MoneyDeposited (semean) SEMoneyDeposited=MoneyDeposited, by(TaxYear Treat);
+gen LHS=AvgMoneyDeposited-1.96*SEMoneyDeposited;
+gen RHS=AvgMoneyDeposited+1.96*SEMoneyDeposited;
+twoway (connected AvgMoneyDeposited TaxYear if Treat==0) 
+	   (line LHS TaxYear if Treat==0, lpattern(dot) lcolor(navy)) (line RHS TaxYear if Treat==0, lpattern(dot) lcolor(navy)) 
+       (connected AvgMoneyDeposited TaxYear if Treat==1, lpattern(dash) lcolor(red)) 
+	   (line LHS TaxYear if Treat==1, lpattern(dot) lcolor(navy)) (line RHS TaxYear if Treat==1, lpattern(dot) lcolor(navy)), 
+	   xline(2) 
+	   legend(order(1 "Retailers" 4 " Wholesalers"))
+	   graphregion(color(white))
+	   title("Trends for VAT Deposited") 
+	   note("Mean Vat deposited in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
+restore; 
 
-preserve
-keep if TotalCount==5
-collapse (sum) MoneyDeposited (mean) AvgMoneyDeposited=MoneyDeposited (semean) SEMoneyDeposited=MoneyDeposited, by(TaxYear Treat)
-gen LHS=AvgMoneyDeposited-1.96*SEMoneyDeposited
-gen RHS=AvgMoneyDeposited+1.96*SEMoneyDeposited
-twoway (connected AvgMoneyDeposited TaxYear if Treat==0) (connected LHS TaxYear if Treat==0) (connected RHS TaxYear if Treat==0) (connected AvgMoneyDeposited TaxYear if Treat==1) (connected LHS TaxYear if Treat==1) (connected RHS TaxYear if Treat==1), xline(2) legend (order(1 "Control Group" 4 " Treatment Group")) title("Trends for VAT Deposited") note("Vat deposited in million rupees. Number of control firms is 140 and number of treatment firms is 362")
-restore 
+#delimit ;
+preserve;
+keep if TotalCount==5;
+collapse (sum) TaxCreditBeforeAdjustment (mean) AvgTaxCreditBeforeAdjustment=TaxCreditBeforeAdjustment (semean) SETaxCreditBeforeAdjustment=TaxCreditBeforeAdjustment, by(TaxYear Treat);
+gen LHS=AvgTaxCreditBeforeAdjustment-1.96*SETaxCreditBeforeAdjustment;
+gen RHS=AvgTaxCreditBeforeAdjustment+1.96*SETaxCreditBeforeAdjustment;
+twoway (connected AvgTaxCreditBeforeAdjustment TaxYear if Treat==0) 
+	   (line LHS TaxYear if Treat==0, lpattern(dot) lcolor(navy)) (line RHS TaxYear if Treat==0, lpattern(dot) lcolor(navy)) 
+       (connected AvgTaxCreditBeforeAdjustment TaxYear if Treat==1, lpattern(dash) lcolor(red)) 
+	   (line LHS TaxYear if Treat==1, lpattern(dot) lcolor(navy)) (line RHS TaxYear if Treat==1, lpattern(dot) lcolor(navy)), 
+	   xline(2) 
+	   legend(order(1 "Retailers" 4 " Wholesalers"))
+	   graphregion(color(white))
+	   title("Trends for Tax Credit Claimed") 
+	   note("Mean input credit claimed in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
+restore; 
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\MeanTaxCredit_annual_with_confidenceintervals.pdf", as(pdf) replace
+
+
+#delimit ;
+preserve;
+keep if TotalCount==5;
+collapse (sum) OutputTaxBeforeAdjustment (mean) AvgOutputTaxBeforeAdjustment=OutputTaxBeforeAdjustment (semean) SEOutputTaxBeforeAdjustment=OutputTaxBeforeAdjustment, by(TaxYear Treat);
+gen LHS=AvgOutputTaxBeforeAdjustment-1.96*SEOutputTaxBeforeAdjustment;
+gen RHS=AvgOutputTaxBeforeAdjustment+1.96*SEOutputTaxBeforeAdjustment;
+twoway (connected AvgOutputTaxBeforeAdjustment TaxYear if Treat==0) 
+	   (line LHS TaxYear if Treat==0, lpattern(dot) lcolor(navy)) (line RHS TaxYear if Treat==0, lpattern(dot) lcolor(navy)) 
+       (connected AvgOutputTaxBeforeAdjustment TaxYear if Treat==1, lpattern(dash) lcolor(red)) 
+	   (line LHS TaxYear if Treat==1, lpattern(dot) lcolor(navy)) (line RHS TaxYear if Treat==1, lpattern(dot) lcolor(navy)), 
+	   xline(2) 
+	   legend(order(1 "Retailers" 4 " Wholesalers"))
+	   graphregion(color(white))
+	   title("Trends for Ouput Tax declared") 
+	   note("Mean output tax declared in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
+restore; 
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\MeanOutputTax_annual_with_confidenceintervals.pdf", as(pdf) replace
 
 preserve
 keep if TotalCount==5
