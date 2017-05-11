@@ -404,14 +404,24 @@ collapse (sum) MoneyDeposited, by (TaxYear Treat SpecialTeam)
 
 histogram MoneyDeposited if MoneyDeposited>2&TaxYear==1&MoneyDeposited<12, width(.1) fraction
 
-
-//Regression of the top 10%tile of the firms
 destring DealerTIN, replace
 xtset DealerTIN TaxYear
 
 gen Post=0
 replace Post=1 if TaxYear>2
 
+
+//Regression of the bottom 80% of the firms
+gen Treat2=1 if Treat==1&TreatGroup<=80&TaxYear==1
+replace Treat2=0 if Treat==0&ControlGroup<=80&TaxYear==1
+
+
+//Regression of the bottom 90% of the firms
+gen Treat2=1 if Treat==1&TreatGroup<=90&TaxYear==1
+replace Treat2=0 if Treat==0&ControlGroup<=90&TaxYear==1
+
+
+//Regression of the top 10%tile of the firms
 gen Treat2=1 if Treat==1&TreatGroup>90&TreatGroup<101&TaxYear==1
 replace Treat2=0 if Treat==0&ControlGroup>90&ControlGroup<101&TaxYear==1
 
@@ -518,6 +528,37 @@ areg OutputTaxBeforeAdjustment  Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if
 outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TopDecile_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
 areg ZeroTurnover Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, cluster(DealerTIN) absorb(DealerTIN)
 outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TopDecile_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
+
+
+//For bottom 90%, it seems to be the growth story
+areg PositiveContribution Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Bottom90_TotalCount5_Treat_areg",  tex replace nocons keep(Post iPostTreat) 
+areg VatIncrease Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, cluster(DealerTIN) absorb(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Bottom90_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
+areg MoneyDeposited Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, cluster(DealerTIN) absorb(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Bottom90_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
+areg TaxCreditBeforeAdjustment Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, cluster(DealerTIN) absorb(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Bottom90_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
+areg OutputTaxBeforeAdjustment  Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, cluster(DealerTIN) absorb(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Bottom90_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
+areg ZeroTurnover Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, cluster(DealerTIN) absorb(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Bottom90_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
+
+
+//For bottom 80%, it seems to be the growth story
+areg PositiveContribution Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Bottom80_TotalCount5_Treat_areg",  tex replace nocons keep(Post iPostTreat) 
+areg VatIncrease Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, cluster(DealerTIN) absorb(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Bottom80_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
+areg MoneyDeposited Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, cluster(DealerTIN) absorb(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Bottom80_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
+areg TaxCreditBeforeAdjustment Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, cluster(DealerTIN) absorb(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Bottom80_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
+areg OutputTaxBeforeAdjustment  Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, cluster(DealerTIN) absorb(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Bottom80_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
+areg ZeroTurnover Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, cluster(DealerTIN) absorb(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Bottom80_TotalCount5_Treat_areg",  tex append nocons keep(Post iPostTreat) 
+
 
 
 xtreg CreditIncrease Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, fe cluster(DealerTIN)
