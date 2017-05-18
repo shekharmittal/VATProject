@@ -600,10 +600,6 @@ twoway (connected MoneyDeposited TaxYear if Treat==0)  (connected MoneyDeposited
 restore 
 
 
-xtile group=CreditRatio, nq(200)
-xtile CentralGroup=LocalCreditRatio, nq(200)
-
-
 destring DealerTIN, replace
 xtset DealerTIN TaxYear
 
@@ -646,7 +642,7 @@ gen iTreat3=Treat*iTaxYear3
 gen iTreat4=Treat*iTaxYear4	
 gen iTreat5=Treat*iTaxYear5
 
-xtreg lMoneyDeposited iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5  iTreat1 iTreat2  iTreat4 iTreat5, fe cluster(DealerTIN)
+xtreg MoneyDeposited iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5  iTreat1 iTreat2  iTreat4 iTreat5, fe cluster(DealerTIN)
 outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Post",  tex append nocons  cttop(All firms)
 xtreg lMoneyDeposited iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5  iTreat1 iTreat2  iTreat4 iTreat5 if TotalCount==5, fe cluster(DealerTIN)
 outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_Post",  tex replace nocons cttop(Always present firms)
