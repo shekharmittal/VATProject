@@ -190,7 +190,6 @@ drop if QuarterlyDummy==1&MonthlyDummy==1&TaxYear==3
 
 collapse (firstnm) WardName (sum)AdjustCSTLiability RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxYear)
 
-gen dummy=1
 
 gen ZeroTurnover=0
 replace ZeroTurnover=1 if TurnoverGross==0
@@ -478,6 +477,7 @@ gen InterstateRatio=TurnoverCentral/TurnoverGross
 gen LocalVatRatio=MoneyDeposited/TurnoverLocal
 gen LocalCreditRatio=TaxCreditBeforeAdjustment/TurnoverLocal
 gen LocalTaxRatio=OutputTaxBeforeAdjustment/TurnoverLocal
+gen Diff=OutputTaxBeforeAdjustment-TaxCreditBeforeAdjustment
 
 gen Treat=0 if DummyRetailer==1&DummyWholeSaler==0&DummyManufacturer==0
 replace Treat=1 if DummyRetailer==0&DummyWholeSaler==1&DummyManufacturer==0

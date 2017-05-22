@@ -327,7 +327,7 @@ gen iTreatT4=Treat*iTaxQuarter4
 gen iTreatT5=Treat*iTaxQuarter5
 gen iTreatT6=Treat*iTaxQuarter6
 gen iTreatT7=Treat*iTaxQuarter7
-gen iTreatT8=Treat*iTaxQuarter8
+//gen iTreatT8=Treat*iTaxQuarter8
 gen iTreatT9=Treat*iTaxQuarter9
 gen iTreatT10=Treat*iTaxQuarter10
 gen iTreatT11=Treat*iTaxQuarter11
@@ -348,7 +348,7 @@ label variable iTreatT4 "-5"
 label variable iTreatT5 "-4"
 label variable iTreatT6 "-3"
 label variable iTreatT7 "-2"
-label variable iTreatT8 "-1"
+//label variable iTreatT8 "-1"
 label variable iTreatT9 "0"
 label variable iTreatT10 "+1"
 label variable iTreatT11 "+2"

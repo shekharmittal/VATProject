@@ -283,6 +283,7 @@ gen LocalTaxRatio=OutputTaxBeforeAdjustment/TurnoverLocal
 
 
 
+
 gen Cycle=mod(TaxQuarter,4)
 gsort DealerTIN Cycle TaxQuarter
 by DealerTIN Cycle: gen DeltaMoneyDeposited=MoneyDeposited-MoneyDeposited[_n-1]
