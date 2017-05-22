@@ -705,6 +705,8 @@ areg TaxCreditBeforeAdjustment Post iPostTreat  iTaxYear2 iTaxYear4 iTaxYear5 if
 outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
 areg OutputTaxBeforeAdjustment  Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
 outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
+areg Diff  Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_Treat",  tex append nocons keep(Post iPostTreat) 
 
 
 areg VatIncrease Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
