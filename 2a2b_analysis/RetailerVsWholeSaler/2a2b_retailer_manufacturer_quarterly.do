@@ -645,8 +645,10 @@ drop if _merge_registeredsales==2
 
 replace RegisteredSalesTax=RegisteredSalesTax/1000000
 replace UnregisteredSalesTax=UnregisteredSalesTax/1000000
+
 replace UnregisteredSalesTax=OutputTaxBeforeAdjustment if _merge_registeredsales==1&TaxQuarter>8
 replace RegisteredSalesTax=0 if _merge_registeredsales==1&TaxQuarter>8
+
 gen UnTaxProp=UnregisteredSalesTax/OutputTaxBeforeAdjustment
 gen RTaxProp=RegisteredSalesTax/OutputTaxBeforeAdjustment
 
