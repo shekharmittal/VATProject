@@ -234,8 +234,6 @@ replace VatIncrease=1 if DeltaMoneyDeposited>0&DeltaMoneyDeposited!=.
 merge m:1 DealerTIN using "E:\data\DataVerification\step3\DealerProfile_uniqueTin.dta", keepusing(Nature Constitution RegistrationType RegistrationDate SubmissionDate Ward BooleanInterState Boolean201011 Boolean201112 Boolean201213 BooleanThirdPartyStorage BooleanSurveyFilled GTONil201213 PhysicalWard BooleanRegisteredIEC BooleanRegisteredCE BooleanServiceTax)
 keep if _merge==1|_merge==3
 
-
-
 gen DummyRetailer = 0
 gen DummyManufacturer = 0
 gen DummyWholeSaler = 0 
@@ -270,79 +268,6 @@ replace DummyWholeSaler = 1 if(regexm(Nature, "WHOLESALE DEALER"))
 replace DummyWholeSaler = 1 if(regexm(Nature, "WHOLESELLER"))
 replace DummyWholeSaler = 1 if(regexm(Nature, "wholeseller"))
 replace DummyWholeSaler = 1 if(regexm(Nature, "wholesaler"))
-
-/*
-replace DummyInterStateSeller = 1 if(regexm(Nature, "Interstate Seller"))
-replace DummyInterStateSeller = 1 if(regexm(Nature, "INTERSTATE PURCHASER AND SELLER"))
-replace DummyInterStateSeller = 1 if(regexm(Nature, "INTERSTATE SALE/PURCHASE"))
-replace DummyInterStateSeller = 1 if(regexm(Nature, "INTERSTATE SELLER AND PURCHASER"))
-replace DummyInterStateSeller = 1 if(regexm(Nature, "INTERSTATE SELLER"))
-replace DummyInterStateSeller = 1 if(regexm(Nature, "Inter State Seller"))
-
-replace DummyInterStatePurchaser = 1 if(regexm(Nature, "Interstate Purchaser"))
-replace DummyInterStatePurchaser = 1 if(regexm(Nature, "INTERSTATE SALE/PURCHASE"))
-replace DummyInterStatePurchaser = 1 if(regexm(Nature, "INTERSTATE SELLER AND PURCHASER"))
-replace DummyInterStatePurchaser = 1 if(regexm(Nature, "INTERSTATE PURCHASER"))
-replace DummyInterStatePurchaser = 1 if(regexm(Nature, "INTERSTATE PURCHASER AND SELLER"))
-replace DummyInterStatePurchaser = 1 if(regexm(Nature, "Inter State Purchaser"))
-
-
-
-replace DummyWorkContractor = 1 if(regexm(Nature, "Work Contractor"))
-replace DummyWorkContractor = 1 if(regexm(Nature, "WORK CONTRACTOR"))
-replace DummyWorkContractor = 1 if(regexm(Nature, "WORKCONTRACT"))
-replace DummyWorkContractor = 1 if(regexm(Nature, "WORK CONTRACT"))
-replace DummyWorkContractor = 1 if(regexm(Nature, "CONTRACTOR"))
-replace DummyWorkContractor = 1 if(regexm(Nature, "Contractor"))
-
-replace DummyOther = 1 if(regexm(Nature, "Other"))
-replace DummyOther = 1 if(regexm(Nature, "OTHER"))
-
-replace DummyImporter = 1 if(regexm(Nature, "Importer"))
-replace DummyImporter = 1 if(regexm(Nature, "IMPORTER/EXPORTER"))
-replace DummyImporter = 1 if(regexm(Nature, "IMPORTER"))
-
-replace DummyExporter = 1 if(regexm(Nature, "Exporter"))
-replace DummyExporter = 1 if(regexm(Nature, "EXPORTER"))
-
-replace DummyHotel = 1 if(regexm(Nature, "Restaurent"))
-replace DummyHotel = 1 if(regexm(Nature, "RESTURANT"))
-replace DummyHotel = 1 if(regexm(Nature, "HOTEL"))
-replace DummyHotel = 1 if(regexm(Nature, "RESTAURENT"))
-replace DummyHotel = 1 if(regexm(Nature, "RESTAURANT"))
-replace DummyHotel = 1 if(regexm(Nature, "RESTURENT"))
-replace DummyHotel = 1 if(regexm(Nature, "CATERING"))
-replace DummyHotel = 1 if(regexm(Nature, "Restaurant"))
-replace DummyHotel = 1 if(regexm(Nature, "HOTELS"))
-replace DummyHotel = 1 if(regexm(Nature, "CANTEENS"))
-replace DummyHotel = 1 if(regexm(Nature, "Banquet"))
-replace DummyHotel = 1 if(regexm(Nature, "Catering"))
-replace DummyHotel = 1 if(regexm(Nature, "BANQUET"))
-replace DummyHotel = 1 if(regexm(Nature, "Banquet"))
-replace DummyHotel = 1 if(regexm(Nature, "RESTURAENT"))
-replace DummyHotel = 1 if(regexm(Nature, "COFFEE SHOP"))
-replace DummyHotel = 1 if(regexm(Nature, "RESTURAENT"))
-replace DummyHotel = 1 if(regexm(Nature, "hotel industry"))
-replace DummyHotel = 1 if(regexm(Nature, "CATERERS"))
-
-replace DummyECommerce = 1 if(regexm(Nature, "E COMMERCE"))
-replace DummyECommerce = 1 if(regexm(Nature, "Online Seller"))
-replace DummyECommerce = 1 if(regexm(Nature, "Online Trading"))
-replace DummyECommerce = 1 if(regexm(Nature, "ONLINE TRADING"))
-replace DummyECommerce = 1 if(regexm(Nature, "E Commerce"))
-replace DummyECommerce = 1 if(regexm(Nature, "Ecommerce"))
-replace DummyECommerce = 1 if(regexm(Nature, "Website Retailing"))
-replace DummyECommerce = 1 if(regexm(Nature, "E Commerece"))
-replace DummyECommerce = 1 if(regexm(Nature, "ECOMMERCE"))
-replace DummyECommerce = 1 if(regexm(Nature, "ONLINE SHOPPING"))
-
-
-gen DummyTelecom=0
-replace DummyTelecom=1 if (regexm(Nature, "Telecom"))
-replace DummyTelecom=1 if (regexm(Nature, "TELECOM"))
-replace DummyTelecom=1 if (regexm(Nature, "DTH SERVICE"))
-replace DummyTelecom=1 if (regexm(Nature, "Internet Service Provider"))
-*/
 
 
 replace MoneyDeposited =MoneyDeposited/1000000

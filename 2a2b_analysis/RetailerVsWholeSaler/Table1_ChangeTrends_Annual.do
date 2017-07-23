@@ -197,23 +197,17 @@ gsort DealerTIN TaxYear
 by DealerTIN: gen TotalCount=_N
 by DealerTIN: gen YearCount=_n
 gsort DealerTIN TaxYear
-by DealerTIN: gen DeltaMoneyDeposited=MoneyDeposited-MoneyDeposited[_n-1]
-by DealerTIN: gen GrowthRate=DeltaMoneyDeposited/MoneyDeposited[_n-1]
+
 
 keep if TotalCount==5
 
-gen VatIncrease=0 if DeltaMoneyDeposited!=.
-replace VatIncrease=1 if DeltaMoneyDeposited>0&DeltaMoneyDeposited!=.
-
-replace MoneyDeposited =MoneyDeposited/1000000
+replace MoneyDeposited=MoneyDeposited/1000000
 replace OutputTaxBeforeAdjustment=OutputTaxBeforeAdjustment/1000000
 replace TaxCreditBeforeAdjustment=TaxCreditBeforeAdjustment/1000000
 replace TurnoverGross=TurnoverGross/1000000
 replace TurnoverCentral=TurnoverCentral/1000000
 replace TurnoverLocal=TurnoverLocal/1000000
-replace DeltaMoneyDeposited =DeltaMoneyDeposited/1000000
 
-	
 gen VatRatio=MoneyDeposited/TurnoverGross
 gen CreditRatio=TaxCreditBeforeAdjustment/TurnoverGross
 gen TaxRatio=OutputTaxBeforeAdjustment/TurnoverGross
@@ -223,11 +217,27 @@ gen LocalCreditRatio=TaxCreditBeforeAdjustment/TurnoverLocal
 gen LocalTaxRatio=OutputTaxBeforeAdjustment/TurnoverLocal
 gen Diff=OutputTaxBeforeAdjustment-TaxCreditBeforeAdjustment
 
+by DealerTIN: gen DeltaPositiveContribution=PositiveContribution-PositiveContribution[_n-1]
+by DealerTIN: gen DeltaTurnoverGross=TurnoverGross-TurnoverGross[_n-1]
+by DealerTIN: gen DeltaTurnoverLocal=TurnoverLocal-TurnoverLocal[_n-1]
+by DealerTIN: gen DeltaTaxCreditBeforeAdjustment=TaxCreditBeforeAdjustment-TaxCreditBeforeAdjustment[_n-1]
+by DealerTIN: gen DeltaOutputTaxBeforeAdjustment=OutputTaxBeforeAdjustment-OutputTaxBeforeAdjustment[_n-1]
+by DealerTIN: gen DeltaVatRatio=VatRatio-VatRatio[_n-1]
+by DealerTIN: gen DeltaCreditRatio=CreditRatio-CreditRatio[_n-1]
+by DealerTIN: gen DeltaTaxRatio=TaxRatio-TaxRatio[_n-1]
+by DealerTIN: gen DeltaInterstateRatio=InterstateRatio-InterstateRatio[_n-1]
+by DealerTIN: gen DeltaMoneyDeposited=MoneyDeposited-MoneyDeposited[_n-1]
+by DealerTIN: gen GrowthRate=DeltaMoneyDeposited/MoneyDeposited[_n-1]
+gen VatIncrease=0 if DeltaMoneyDeposited!=.
+replace VatIncrease=1 if DeltaMoneyDeposited>0&DeltaMoneyDeposited!=.
 
-gen lMoneyDeposited=log(MoneyDeposited)
-gen lTaxCreditBeforeAdjustment=log(TaxCreditBeforeAdjustment)
-gen lOutputTaxBeforeAdjustment=log(OutputTaxBeforeAdjustment)
-
+/*
+replace DeltaMoneyDeposited=DeltaMoneyDeposited/1000000
+replace DeltaTurnoverGross=DeltaTurnoverGross/1000000
+replace DeltaTurnoverLocal=DeltaTurnoverLocal/1000000
+replace DeltaTaxCreditBeforeAdjustment=DeltaTaxCreditBeforeAdjustment/1000000
+replace DeltaOutputTaxBeforeAdjustment=DeltaOutputTaxBeforeAdjustment/1000000
+*/
 
 merge m:1 DealerTIN using "E:\data\DataVerification\step3\DealerProfile_uniqueTin.dta", keepusing(Nature Constitution RegistrationType RegistrationDate SubmissionDate Ward BooleanInterState Boolean201011 Boolean201112 Boolean201213 BooleanThirdPartyStorage BooleanSurveyFilled GTONil201213 PhysicalWard BooleanRegisteredIEC BooleanRegisteredCE BooleanServiceTax)
 keep if _merge==1|_merge==3
@@ -254,7 +264,6 @@ replace DummyWholeSaler = 1 if(regexm(Nature, "wholeseller"))
 replace DummyWholeSaler = 1 if(regexm(Nature, "wholesaler"))
 
 
-
 replace DummyManufacturer = 1 if(regexm(Nature, "Manufacturer"))
 replace DummyManufacturer = 1 if(regexm(Nature, "Manufecturer"))
 replace DummyManufacturer = 1 if(regexm(Nature, "Manufacturing"))
@@ -265,196 +274,49 @@ gen Treat=0 if DummyRetailer==1&DummyWholeSaler==0&DummyManufacturer==0
 replace Treat=1 if DummyRetailer==0&DummyWholeSaler==1&DummyManufacturer==0
 
 
-destring DealerTIN, replace
-xtset DealerTIN TaxYear
+tabstat TurnoverLocal TurnoverGross MoneyDeposited TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment Diff PositiveContribution VatRatio CreditRatio TaxRatio  InterstateRatio  if TaxYear==1&Treat==1, stat(mean sd sem)
+tabstat TurnoverLocal TurnoverGross MoneyDeposited TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment Diff PositiveContribution VatRatio CreditRatio TaxRatio  InterstateRatio  if TaxYear==1&Treat==0, stat(mean sd sem)
 
-*drop Post iPostTreat
-
-gen Post=0
-replace Post=1 if TaxYear>2
-
-gen iPostTreat=Post*Treat
-gen iTaxYear1=0
-gen iTaxYear2=0
-gen iTaxYear3=0
-gen iTaxYear4=0
-gen iTaxYear5=0
-
-replace iTaxYear1=1 if TaxYear==1
-replace iTaxYear2=1 if TaxYear==2
-replace iTaxYear3=1 if TaxYear==3
-replace iTaxYear4=1 if TaxYear==4
-replace iTaxYear5=1 if TaxYear==5
-
-gen iTreat1=Treat*iTaxYear1
-gen iTreat2=Treat*iTaxYear2
-gen iTreat3=Treat*iTaxYear3
-gen iTreat4=Treat*iTaxYear4	
-gen iTreat5=Treat*iTaxYear5
+tabstat DeltaTurnoverGross DeltaTurnoverLocal DeltaMoneyDeposited DeltaTaxCredit DeltaOutputTax DeltaVatRatio DeltaCreditRatio DeltaTaxRatio DeltaInterstateRatio DeltaPositiveContribution if Treat==1&TaxYear==2, stat(mean sd sem)
+tabstat DeltaTurnoverGross DeltaTurnoverLocal DeltaMoneyDeposited DeltaTaxCredit DeltaOutputTax DeltaVatRatio DeltaCreditRatio DeltaTaxRatio DeltaInterstateRatio DeltaPositiveContribution if Treat==0&TaxYear==2, stat(mean sd sem)
 
 
-label variable iTreat1 "-2"
-label variable iTreat2 "-1"
-label variable iTreat3 "0"
-label variable iTreat4 "+1"
-label variable iTreat5 "+2"
+merge m:1 TaxYear using "F:\2a2b_analysis\PriceIndexAnnual.dta", keepusing(cpi) generate(_merge_real)
+drop _merge_real
 
+gen RealTurnoverCentral=TurnoverCentral/cpi
+gen RealTurnoverGross=TurnoverGross/cpi
+gen RealTurnoverLocal=TurnoverLocal/cpi
+gen RealMoneyDeposited=MoneyDeposited/cpi
+gen RealTaxCreditBeforeAdjustment=TaxCreditBeforeAdjustment/cpi
+gen RealOutputTaxBeforeAdjustment=OutputTaxBeforeAdjustment/cpi
+gen RealDiff=Diff/cpi
 
+gen RealVatRatio=RealMoneyDeposited/RealTurnoverGross
+gen RealCreditRatio=RealTaxCreditBeforeAdjustment/RealTurnoverGross
+gen RealTaxRatio=RealOutputTaxBeforeAdjustment/RealTurnoverGross
+gen RealInterstateRatio=RealTurnoverCentral/RealTurnoverGross
 
-matrix C = J(3,5,.)
-matrix rownames C = mean ll95 ul95
-matrix colnames C = iTreat1 iTreat2 iTreat3 iTreat4 iTreat5
+gsort DealerTIN TaxYear
+by DealerTIN: gen DeltaRealMoneyDeposited=RealMoneyDeposited-RealMoneyDeposited[_n-1]
+by DealerTIN: gen DeltaRealTurnoverGross=RealTurnoverGross-RealTurnoverGross[_n-1]
+by DealerTIN: gen DeltaRealTurnoverLocal=RealTurnoverLocal-RealTurnoverLocal[_n-1]
+by DealerTIN: gen DeltaRealTaxCredit=RealTaxCreditBeforeAdjustment-RealTaxCreditBeforeAdjustment[_n-1]
+by DealerTIN: gen DeltaRealOutputTax=RealOutputTaxBeforeAdjustment-RealOutputTaxBeforeAdjustment[_n-1]
+by DealerTIN: gen DeltaRealVatRatio=RealVatRatio-RealVatRatio[_n-1]
+by DealerTIN: gen DeltaRealCreditRatio=RealCreditRatio-RealCreditRatio[_n-1]
+by DealerTIN: gen DeltaRealTaxRatio=RealTaxRatio-RealTaxRatio[_n-1]
+by DealerTIN: gen DeltaRealInterstateRatio=RealInterstateRatio-RealInterstateRatio[_n-1]
 
-matrix C[1,2]=0 
-matrix C[2,2]=0 
-matrix C[3,2]=0 
+/*
+replace DeltaRealTurnoverGross=DeltaRealTurnoverGross/1000000
+replace DeltaRealTurnoverLocal=DeltaRealTurnoverLocal/1000000
+replace DeltaRealTaxCredit=DeltaRealTaxCredit/1000000
+replace DeltaRealOutputTax=DeltaRealOutputTax/1000000
+*/
 
+tabstat TurnoverLocal TurnoverGross MoneyDeposited TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment Diff PositiveContribution VatRatio CreditRatio TaxRatio  InterstateRatio  if TaxYear==1&Treat==1, stat(mean sd sem)
+tabstat TurnoverLocal TurnoverGross MoneyDeposited TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment Diff PositiveContribution VatRatio CreditRatio TaxRatio  InterstateRatio  if TaxYear==1&Treat==0, stat(mean sd sem)
 
-# delimit;
-areg PositiveContribution iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
-	};
-};
-coefplot (matrix(C), ci((2 3))), drop(_cons Post iTaxYear2 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-	     graphregion(color(white))
-		  xtitle("Years with respect to the introduction of the policy")
-	     title("Coefficient for PositiveContribution") 
-	     note( "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\PositiveContribution.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\PositiveContribution.pdf", as(pdf) replace;
-		 
-# delimit;
-areg VatIncrease iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
-	};
-};
-coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-         graphregion(color(white))
-	     title("Coefficient for VatIncrease")  
-		 xtitle("Years with respect to the introduction of the policy")
-	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\VatIncrease.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\VatIncrease.pdf", as(pdf) replace;
-
-		 
-		 
-		 
-# delimit;
-areg MoneyDeposited iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
-	};
-};
-coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-         graphregion(color(white))
-	     title("Coefficient for MoneyDeposited")
-		 xtitle("Years with respect to the introduction of the policy")
-	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\MoneyDeposited.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\MoneyDeposited.pdf", as(pdf) replace;
-
-		 
-# delimit;
-areg TaxCreditBeforeAdjustment iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
-	};
-};
-coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-         graphregion(color(white))
-	     title("Coefficient for TaxCredit")
-		 xtitle("Years with respect to the introduction of the policy")
-	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\TaxCreditBeforeAdjustment.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\TaxCreditBeforeAdjustment.pdf", as(pdf) replace;
-
-		 
-# delimit;
-areg OutputTaxBeforeAdjustment iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
-	};
-};
-coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-         graphregion(color(white))
-	     title("Coefficient for Output Tax")
-		 xtitle("Years with respect to the introduction of the policy")
-	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\OutputTaxBeforeAdjustment.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\OutputTaxBeforeAdjustment.pdf", as(pdf) replace;
-
-		 		 		 
-	# delimit;
-	areg Diff iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
-	};
-};
-coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-         graphregion(color(white))
-	     title("Coefficient for OutputTax-InputCredit ")
-		 xtitle("Years with respect to the introduction of the policy")
-	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\Diff.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\Diff.pdf", as(pdf) replace;
-
-		 		 		 
-# delimit;
-areg InterstateRatio iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
-	};
-};
-coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-         graphregion(color(white))
-	     title("Coefficient for Central Turnover/Total Turnover ")
-		 xtitle("Years with respect to the introduction of the policy")
-	     note("Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\InterstateRatio.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\InterstateRatio.pdf", as(pdf) replace;
-
-		 
-gen lDiff=log(Diff+1)
-gen Diff2=-Diff
-replace lDiff=-log(Diff2+1) if lDiff==.
-
-# delimit;
-areg lDiff iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
-	};
-};
-coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-         graphregion(color(white))
-	     title("Coefficient for Log(OutputTax-InputCredit)")
-		 xtitle("Years with respect to the introduction of the policy")
-	     note("Number of retailers is 32979 and number of wholesalers is 19515" "If the difference is negative, we do -(log(abs(diff)))");
-
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\LogDiff.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\LogDiff.pdf", as(pdf) replace;
+tabstat DeltaRealTurnoverGross DeltaRealTurnoverLocal DeltaRealMoneyDeposited DeltaRealTaxCredit DeltaRealOutputTax DeltaRealVatRatio DeltaRealCreditRatio DeltaRealTaxRatio DeltaRealInterstateRatio if Treat==1&TaxYear==2, stat(mean sd sem)
+tabstat DeltaRealTurnoverGross DeltaRealTurnoverLocal DeltaRealMoneyDeposited DeltaRealTaxCredit DeltaRealOutputTax DeltaRealVatRatio DeltaRealCreditRatio DeltaRealTaxRatio DeltaRealInterstateRatio if Treat==0&TaxYear==2, stat(mean sd sem)

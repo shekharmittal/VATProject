@@ -266,7 +266,7 @@ replace DummyManufacturer = 1 if(regexm(Nature, "MANUFACTURER"))
 
 
 gen Treat=0 if DummyRetailer==1&DummyWholeSaler==0&DummyManufacturer==0
-replace Treat=1 if Treat!=0
+replace Treat=1 if DummyRetailer==0
 
 destring DealerTIN, replace
 xtset DealerTIN TaxQuarter

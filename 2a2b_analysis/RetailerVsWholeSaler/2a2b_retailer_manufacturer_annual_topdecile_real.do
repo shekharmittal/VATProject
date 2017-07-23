@@ -265,6 +265,41 @@ gen Treat=0 if DummyRetailer==1&DummyWholeSaler==0&DummyManufacturer==0
 replace Treat=1 if DummyRetailer==0&DummyWholeSaler==1&DummyManufacturer==0
 
 
+xtile group1=MoneyDeposited if Treat==1&TaxYear==1 , nq(10) 
+xtile group2=MoneyDeposited if Treat==1&TaxYear==2 , nq(10) 
+xtile group3=MoneyDeposited if Treat==1&TaxYear==3 , nq(10) 
+xtile group4=MoneyDeposited if Treat==1&TaxYear==4 , nq(10)
+xtile group5=MoneyDeposited if Treat==1&TaxYear==5 , nq(10) 
+
+
+gen TreatGroup=group1
+replace TreatGroup=group2 if TreatGroup==.
+replace TreatGroup=group3 if TreatGroup==.
+replace TreatGroup=group4 if TreatGroup==.
+replace TreatGroup=group5 if TreatGroup==.
+
+drop group*
+
+xtile group1=MoneyDeposited if Treat==0&TaxYear==1 , nq(10) 
+xtile group2=MoneyDeposited if Treat==0&TaxYear==2 , nq(10) 
+xtile group3=MoneyDeposited if Treat==0&TaxYear==3 , nq(10) 
+xtile group4=MoneyDeposited if Treat==0&TaxYear==4 , nq(10)
+xtile group5=MoneyDeposited if Treat==0&TaxYear==5 , nq(10) 
+
+gen ControlGroup=group1
+replace ControlGroup=group2 if ControlGroup==.
+replace ControlGroup=group3 if ControlGroup==.
+replace ControlGroup=group4 if ControlGroup==.
+replace ControlGroup=group5 if ControlGroup==.
+
+drop group*
+//Regression of the top 10% of the firms
+gen Treat2=1 if Treat==1&TreatGroup==10&TaxYear==1
+replace Treat2=0 if Treat==0&ControlGroup==10&TaxYear==1
+
+gsort DealerTIN TaxYear
+by DealerTIN: replace Treat2=Treat2[_n-1] if Treat2>=.
+
 destring DealerTIN, replace
 xtset DealerTIN TaxYear
 
@@ -273,7 +308,7 @@ xtset DealerTIN TaxYear
 gen Post=0
 replace Post=1 if TaxYear>2
 
-gen iPostTreat=Post*Treat
+gen iPostTreat=Post*Treat2
 gen iTaxYear1=0
 gen iTaxYear2=0
 gen iTaxYear3=0
@@ -286,11 +321,25 @@ replace iTaxYear3=1 if TaxYear==3
 replace iTaxYear4=1 if TaxYear==4
 replace iTaxYear5=1 if TaxYear==5
 
-gen iTreat1=Treat*iTaxYear1
-gen iTreat2=Treat*iTaxYear2
-gen iTreat3=Treat*iTaxYear3
-gen iTreat4=Treat*iTaxYear4	
-gen iTreat5=Treat*iTaxYear5
+areg PositiveContribution Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_TopDecile",  tex replace nocons keep(Post iPostTreat) 
+areg VatIncrease Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_TopDecile",  tex append nocons keep(Post iPostTreat) 
+areg MoneyDeposited Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_TopDecile",  tex append nocons keep(Post iPostTreat) 
+areg TaxCreditBeforeAdjustment Post iPostTreat  iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_TopDecile",  tex append nocons keep(Post iPostTreat) 
+areg OutputTaxBeforeAdjustment  Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_TopDecile",  tex append nocons keep(Post iPostTreat) 
+areg Diff  Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_TopDecile",  tex append nocons keep(Post iPostTreat) 
+
+
+gen iTreat1=Treat2*iTaxYear1
+gen iTreat2=Treat2*iTaxYear2
+gen iTreat3=Treat2*iTaxYear3
+gen iTreat4=Treat2*iTaxYear4	
+gen iTreat5=Treat2*iTaxYear5
 
 
 label variable iTreat1 "-2"
@@ -312,6 +361,7 @@ matrix C[3,2]=0
 
 # delimit;
 areg PositiveContribution iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
+test iTreat1=0;
 forvalues i = 1(1)5 {;
 	if(`i'!=2){;
 	matrix C[1,`i']=_b[iTreat`i'];
@@ -323,9 +373,9 @@ coefplot (matrix(C), ci((2 3))), drop(_cons Post iTaxYear2 iTaxYear4 iTaxYear5) 
 	     graphregion(color(white))
 		  xtitle("Years with respect to the introduction of the policy")
 	     title("Coefficient for PositiveContribution") 
-	     note( "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\PositiveContribution.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\PositiveContribution.pdf", as(pdf) replace;
+	     note( "Number of retailers is 3297 and number of wholesalers is 1951 (Top decile)");
+graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\PositiveContribution_TopDecile.gph";
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\PositiveContribution_TopDecile.pdf", as(pdf) replace;
 		 
 # delimit;
 areg VatIncrease iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
@@ -341,14 +391,15 @@ coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYe
 	     title("Coefficient for VatIncrease")  
 		 xtitle("Years with respect to the introduction of the policy")
 	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\VatIncrease.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\VatIncrease.pdf", as(pdf) replace;
+graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\VatIncrease_TopDecile.gph";
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\VatIncrease_TopDecile.pdf", as(pdf) replace;
 
 		 
 		 
 		 
 # delimit;
 areg MoneyDeposited iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
+test iTreat1=0;
 forvalues i = 1(1)5 {;
 	if(`i'!=2){;
 	matrix C[1,`i']=_b[iTreat`i'];
@@ -361,12 +412,13 @@ coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYe
 	     title("Coefficient for MoneyDeposited")
 		 xtitle("Years with respect to the introduction of the policy")
 	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\MoneyDeposited.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\MoneyDeposited.pdf", as(pdf) replace;
+graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\MoneyDeposited_TopDecile.gph";
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\MoneyDeposited_TopDecile.pdf", as(pdf) replace;
 
 		 
 # delimit;
 areg TaxCreditBeforeAdjustment iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
+test iTreat1=0;
 forvalues i = 1(1)5 {;
 	if(`i'!=2){;
 	matrix C[1,`i']=_b[iTreat`i'];
@@ -379,12 +431,13 @@ coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYe
 	     title("Coefficient for TaxCredit")
 		 xtitle("Years with respect to the introduction of the policy")
 	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\TaxCreditBeforeAdjustment.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\TaxCreditBeforeAdjustment.pdf", as(pdf) replace;
+graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\TaxCreditBeforeAdjustment_TopDecile.gph";
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\TaxCreditBeforeAdjustment_TopDecile.pdf", as(pdf) replace;
 
 		 
 # delimit;
 areg OutputTaxBeforeAdjustment iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
+test iTreat1=0;
 forvalues i = 1(1)5 {;
 	if(`i'!=2){;
 	matrix C[1,`i']=_b[iTreat`i'];
@@ -397,13 +450,14 @@ coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYe
 	     title("Coefficient for Output Tax")
 		 xtitle("Years with respect to the introduction of the policy")
 	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\OutputTaxBeforeAdjustment.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\OutputTaxBeforeAdjustment.pdf", as(pdf) replace;
+graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\OutputTaxBeforeAdjustment_TopDecile.gph";
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\OutputTaxBeforeAdjustment_TopDecile.pdf", as(pdf) replace;
 
 		 		 		 
 	# delimit;
 	areg Diff iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
+test iTreat1=0;
+	forvalues i = 1(1)5 {;
 	if(`i'!=2){;
 	matrix C[1,`i']=_b[iTreat`i'];
 	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
@@ -415,34 +469,38 @@ coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYe
 	     title("Coefficient for OutputTax-InputCredit ")
 		 xtitle("Years with respect to the introduction of the policy")
 	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\Diff.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\Diff.pdf", as(pdf) replace;
+graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\Diff_TopDecile.gph";
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\Diff_TopDecile.pdf", as(pdf) replace;
 
-		 		 		 
-# delimit;
-areg InterstateRatio iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
-	};
-};
-coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-         graphregion(color(white))
-	     title("Coefficient for Central Turnover/Total Turnover ")
-		 xtitle("Years with respect to the introduction of the policy")
-	     note("Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\InterstateRatio.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\InterstateRatio.pdf", as(pdf) replace;
+
+//Now we do the analysis in real terms
+merge m:1 TaxYear using "F:\2a2b_analysis\PriceIndexAnnual.dta", keepusing(cpi) generate(_merge_real)
+drop _merge_real
+
+
+gen RealMoneyDeposited=MoneyDeposited/cpi
+gen RealTaxCreditBeforeAdjustment=TaxCreditBeforeAdjustment/cpi
+gen RealOutputTaxBeforeAdjustment=OutputTaxBeforeAdjustment/cpi
+gen RealDiff=Diff/cpi
+
+
+areg PositiveContribution Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_TopDecile_Real",  tex replace nocons keep(Post iPostTreat) 
+areg VatIncrease Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5  if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_TopDecile_Real",  tex append nocons keep(Post iPostTreat) 
+areg RealMoneyDeposited Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_TopDecile_Real",  tex append nocons keep(Post iPostTreat) 
+areg RealTaxCreditBeforeAdjustment Post iPostTreat  iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_TopDecile_Real",  tex append nocons keep(Post iPostTreat) 
+areg RealOutputTaxBeforeAdjustment  Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_TopDecile_Real",  tex append nocons keep(Post iPostTreat) 
+areg RealDiff  Post iPostTreat iTaxYear2 iTaxYear4 iTaxYear5 if TotalCount==5, absorb(DealerTIN) cluster(DealerTIN)
+outreg2 using "F:\2a2b_analysis\RetailerVsWholeSaler\diffINdiff_MeanRetailWholeSale_TotalCount5_TopDecile_Real",  tex append nocons keep(Post iPostTreat) 
 
 		 
-gen lDiff=log(Diff+1)
-gen Diff2=-Diff
-replace lDiff=-log(Diff2+1) if lDiff==.
-
 # delimit;
-areg lDiff iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
+areg RealMoneyDeposited iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
+test iTreat1=0;
 forvalues i = 1(1)5 {;
 	if(`i'!=2){;
 	matrix C[1,`i']=_b[iTreat`i'];
@@ -452,9 +510,64 @@ forvalues i = 1(1)5 {;
 };
 coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
          graphregion(color(white))
-	     title("Coefficient for Log(OutputTax-InputCredit)")
+	     title("Coefficient for MoneyDeposited")
 		 xtitle("Years with respect to the introduction of the policy")
-	     note("Number of retailers is 32979 and number of wholesalers is 19515" "If the difference is negative, we do -(log(abs(diff)))");
+	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
+graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\MoneyDeposited_TopDecile_Real.gph";
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\MoneyDeposited_TopDecile_Real.pdf", as(pdf) replace;
 
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\LogDiff.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\LogDiff.pdf", as(pdf) replace;
+		 
+# delimit;
+areg RealTaxCreditBeforeAdjustment iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
+test iTreat1=0;
+forvalues i = 1(1)5 {;
+	if(`i'!=2){;
+	matrix C[1,`i']=_b[iTreat`i'];
+	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
+	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
+	};
+};
+coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
+         graphregion(color(white))
+	     title("Coefficient for TaxCredit")
+		 xtitle("Years with respect to the introduction of the policy");
+graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\TaxCreditBeforeAdjustment_TopDecile_Real.gph";
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\TaxCreditBeforeAdjustment_TopDecile.pdf", as(pdf) replace;
+
+		 
+# delimit;
+areg RealOutputTaxBeforeAdjustment iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
+test iTreat1=0;
+forvalues i = 1(1)5 {;
+	if(`i'!=2){;
+	matrix C[1,`i']=_b[iTreat`i'];
+	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
+	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
+	};
+};
+coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
+         graphregion(color(white))
+	     title("Coefficient for Output Tax")
+		 xtitle("Years with respect to the introduction of the policy")
+	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
+graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\OutputTaxBeforeAdjustment_TopDecile_Real.gph";
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\OutputTaxBeforeAdjustment_TopDecile_Real.pdf", as(pdf) replace;
+
+		 		 		 
+	# delimit;
+	areg RealDiff iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
+test iTreat1=0;
+	forvalues i = 1(1)5 {;
+	if(`i'!=2){;
+	matrix C[1,`i']=_b[iTreat`i'];
+	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
+	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
+	};
+};
+coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
+         graphregion(color(white))
+	     title("Coefficient for OutputTax-InputCredit ")
+		 xtitle("Years with respect to the introduction of the policy")
+	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
+graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\Diff_TopDecile_Real.gph";
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\Diff_TopDecile_Real.pdf", as(pdf) replace;

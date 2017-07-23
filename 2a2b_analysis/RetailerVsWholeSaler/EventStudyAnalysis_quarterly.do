@@ -327,7 +327,7 @@ gen iTreatT4=Treat*iTaxQuarter4
 gen iTreatT5=Treat*iTaxQuarter5
 gen iTreatT6=Treat*iTaxQuarter6
 gen iTreatT7=Treat*iTaxQuarter7
-//gen iTreatT8=Treat*iTaxQuarter8
+gen iTreatT8=Treat*iTaxQuarter8
 gen iTreatT9=Treat*iTaxQuarter9
 gen iTreatT10=Treat*iTaxQuarter10
 gen iTreatT11=Treat*iTaxQuarter11
@@ -348,7 +348,7 @@ label variable iTreatT4 "-5"
 label variable iTreatT5 "-4"
 label variable iTreatT6 "-3"
 label variable iTreatT7 "-2"
-//label variable iTreatT8 "-1"
+label variable iTreatT8 "-1"
 label variable iTreatT9 "0"
 label variable iTreatT10 "+1"
 label variable iTreatT11 "+2"
@@ -396,7 +396,8 @@ graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\Revisions
 		 
 #delimit;
 local TaxQuarterDummy "iTaxQuarter2 iTaxQuarter3 iTaxQuarter4 iTaxQuarter5 iTaxQuarter6 iTaxQuarter7 iTaxQuarter8 iTaxQuarter9 iTaxQuarter10 iTaxQuarter11 iTaxQuarter12 iTaxQuarter13 iTaxQuarter14 iTaxQuarter15 iTaxQuarter16 iTaxQuarter17 iTaxQuarter18 iTaxQuarter19 iTaxQuarter20" ;
-areg PositiveContribution `TaxQuarterDummy' iTreat*, absorb(DealerTIN) cluster(DealerTIN);
+local TreatQuarterDummy "iTreatT1 iTreatT2 iTreatT3 iTreatT4 iTreatT5 iTreatT6 iTreatT7 iTreatT9 iTreatT10 iTreatT11 iTreatT12 iTreatT13 iTreatT14 iTreatT15 iTreatT16 iTreatT17 iTreatT18 iTreatT19 iTreatT20";
+areg PositiveContribution `TaxQuarterDummy' `TreatQuarterDummy', absorb(DealerTIN) cluster(DealerTIN);
 forvalues i = 1(1)20 {;
 	if(`i'!=8){;
 	matrix C[1,`i']=_b[iTreatT`i'];
@@ -434,7 +435,8 @@ graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\VatIncrea
 
 #delimit;
 local TaxQuarterDummy "iTaxQuarter2 iTaxQuarter3 iTaxQuarter4 iTaxQuarter5 iTaxQuarter6 iTaxQuarter7 iTaxQuarter8 iTaxQuarter9 iTaxQuarter10 iTaxQuarter11 iTaxQuarter12 iTaxQuarter13 iTaxQuarter14 iTaxQuarter15 iTaxQuarter16 iTaxQuarter17 iTaxQuarter18 iTaxQuarter19 iTaxQuarter20" ;
-areg MoneyDeposited `TaxQuarterDummy' iTreat*, absorb(DealerTIN) cluster(DealerTIN);
+local TreatQuarterDummy "iTreatT1 iTreatT2 iTreatT3 iTreatT4 iTreatT5 iTreatT6 iTreatT7 iTreatT9 iTreatT10 iTreatT11 iTreatT12 iTreatT13 iTreatT14 iTreatT15 iTreatT16 iTreatT17 iTreatT18 iTreatT19 iTreatT20";
+areg MoneyDeposited `TaxQuarterDummy' `TreatQuarterDummy', absorb(DealerTIN) cluster(DealerTIN);
 forvalues i = 1(1)20 {;
 	if(`i'!=8){;
 	matrix C[1,`i']=_b[iTreatT`i'];
@@ -451,10 +453,14 @@ graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\Money
 graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\MoneyDeposited.pdf", as(pdf) replace;
 
 
+//Testing pre-trends formally
+test iTreatT1=iTreatT2=0=iTreatT3=iTreatT4=iTreatT5=iTreatT6=iTreatT7
+
 
 #delimit;
 local TaxQuarterDummy "iTaxQuarter2 iTaxQuarter3 iTaxQuarter4 iTaxQuarter5 iTaxQuarter6 iTaxQuarter7 iTaxQuarter8 iTaxQuarter9 iTaxQuarter10 iTaxQuarter11 iTaxQuarter12 iTaxQuarter13 iTaxQuarter14 iTaxQuarter15 iTaxQuarter16 iTaxQuarter17 iTaxQuarter18 iTaxQuarter19 iTaxQuarter20" ;
-areg TaxCreditBeforeAdjustment `TaxQuarterDummy' iTreat*, absorb(DealerTIN) cluster(DealerTIN);
+local TreatQuarterDummy "iTreatT1 iTreatT2 iTreatT3 iTreatT4 iTreatT5 iTreatT6 iTreatT7 iTreatT9 iTreatT10 iTreatT11 iTreatT12 iTreatT13 iTreatT14 iTreatT15 iTreatT16 iTreatT17 iTreatT18 iTreatT19 iTreatT20";
+areg TaxCreditBeforeAdjustment `TaxQuarterDummy' `TreatQuarterDummy', absorb(DealerTIN) cluster(DealerTIN);
 forvalues i = 1(1)20 {;
 	if(`i'!=8){;
 	matrix C[1,`i']=_b[iTreatT`i'];
@@ -473,7 +479,8 @@ graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\TaxCredit
 
 #delimit;
 local TaxQuarterDummy "iTaxQuarter2 iTaxQuarter3 iTaxQuarter4 iTaxQuarter5 iTaxQuarter6 iTaxQuarter7 iTaxQuarter8 iTaxQuarter9 iTaxQuarter10 iTaxQuarter11 iTaxQuarter12 iTaxQuarter13 iTaxQuarter14 iTaxQuarter15 iTaxQuarter16 iTaxQuarter17 iTaxQuarter18 iTaxQuarter19 iTaxQuarter20" ;
-areg OutputTaxBeforeAdjustment `TaxQuarterDummy' iTreat*, absorb(DealerTIN) cluster(DealerTIN);
+local TreatQuarterDummy "iTreatT1 iTreatT2 iTreatT3 iTreatT4 iTreatT5 iTreatT6 iTreatT7 iTreatT9 iTreatT10 iTreatT11 iTreatT12 iTreatT13 iTreatT14 iTreatT15 iTreatT16 iTreatT17 iTreatT18 iTreatT19 iTreatT20";
+areg OutputTaxBeforeAdjustment `TaxQuarterDummy' `TreatQuarterDummy', absorb(DealerTIN) cluster(DealerTIN);
 forvalues i = 1(1)20 {;
 	if(`i'!=8){;
 	matrix C[1,`i']=_b[iTreatT`i'];
@@ -493,7 +500,8 @@ graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\OutputTax
 
 #delimit;
 local TaxQuarterDummy "iTaxQuarter2 iTaxQuarter3 iTaxQuarter4 iTaxQuarter5 iTaxQuarter6 iTaxQuarter7 iTaxQuarter8 iTaxQuarter9 iTaxQuarter10 iTaxQuarter11 iTaxQuarter12 iTaxQuarter13 iTaxQuarter14 iTaxQuarter15 iTaxQuarter16 iTaxQuarter17 iTaxQuarter18 iTaxQuarter19 iTaxQuarter20" ;
-areg Diff `TaxQuarterDummy' iTreat*, absorb(DealerTIN) cluster(DealerTIN);
+local TreatQuarterDummy "iTreatT1 iTreatT2 iTreatT3 iTreatT4 iTreatT5 iTreatT6 iTreatT7 iTreatT9 iTreatT10 iTreatT11 iTreatT12 iTreatT13 iTreatT14 iTreatT15 iTreatT16 iTreatT17 iTreatT18 iTreatT19 iTreatT20";
+areg Diff `TaxQuarterDummy' `TreatQuarterDummy', absorb(DealerTIN) cluster(DealerTIN);
 forvalues i = 1(1)20 {;
 	if(`i'!=8){;
 	matrix C[1,`i']=_b[iTreatT`i'];

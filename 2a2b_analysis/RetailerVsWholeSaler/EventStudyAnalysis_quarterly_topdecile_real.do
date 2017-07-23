@@ -1,3 +1,4 @@
+
 cd "E:\data"
 
 //use "PreliminaryAnalysis\returns\form16_data_v3_0901.dta", clear
@@ -188,19 +189,22 @@ by DealerTIN: replace MonthlyDummy=MonthlyDummy[_n-1] if MonthlyDummy>=.
 drop if QuarterlyDummy==1&MonthlyDummy==1&TaxYear==3
 
 
-collapse (firstnm) WardName (sum)AdjustCSTLiability RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxYear)
+collapse (firstnm) WardName (sum)AdjustCSTLiability RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxQuarter)
+drop if TaxQuarter==0
+
 
 gen PositiveContribution=0
 replace PositiveContribution=1 if MoneyDeposited>0
 
-gsort DealerTIN TaxYear
+gsort DealerTIN TaxQuarter
 by DealerTIN: gen TotalCount=_N
 by DealerTIN: gen YearCount=_n
-gsort DealerTIN TaxYear
-by DealerTIN: gen DeltaMoneyDeposited=MoneyDeposited-MoneyDeposited[_n-1]
-by DealerTIN: gen GrowthRate=DeltaMoneyDeposited/MoneyDeposited[_n-1]
 
-keep if TotalCount==5
+keep if TotalCount==20
+
+gen Cycle=mod(TaxQuarter,4)
+gsort DealerTIN Cycle TaxQuarter
+by DealerTIN Cycle: gen DeltaMoneyDeposited=MoneyDeposited-MoneyDeposited[_n-1]
 
 gen VatIncrease=0 if DeltaMoneyDeposited!=.
 replace VatIncrease=1 if DeltaMoneyDeposited>0&DeltaMoneyDeposited!=.
@@ -211,8 +215,6 @@ replace TaxCreditBeforeAdjustment=TaxCreditBeforeAdjustment/1000000
 replace TurnoverGross=TurnoverGross/1000000
 replace TurnoverCentral=TurnoverCentral/1000000
 replace TurnoverLocal=TurnoverLocal/1000000
-replace DeltaMoneyDeposited =DeltaMoneyDeposited/1000000
-
 	
 gen VatRatio=MoneyDeposited/TurnoverGross
 gen CreditRatio=TaxCreditBeforeAdjustment/TurnoverGross
@@ -224,12 +226,8 @@ gen LocalTaxRatio=OutputTaxBeforeAdjustment/TurnoverLocal
 gen Diff=OutputTaxBeforeAdjustment-TaxCreditBeforeAdjustment
 
 
-gen lMoneyDeposited=log(MoneyDeposited)
-gen lTaxCreditBeforeAdjustment=log(TaxCreditBeforeAdjustment)
-gen lOutputTaxBeforeAdjustment=log(OutputTaxBeforeAdjustment)
 
-
-merge m:1 DealerTIN using "E:\data\DataVerification\step3\DealerProfile_uniqueTin.dta", keepusing(Nature Constitution RegistrationType RegistrationDate SubmissionDate Ward BooleanInterState Boolean201011 Boolean201112 Boolean201213 BooleanThirdPartyStorage BooleanSurveyFilled GTONil201213 PhysicalWard BooleanRegisteredIEC BooleanRegisteredCE BooleanServiceTax)
+merge m:1 DealerTIN using "E:\data\DataVerification\step3\DealerProfile_uniqueTin.dta", keepusing(Nature Constitution RegistrationType RegistrationDate SubmissionDate Ward BooleanInterState Boolean201011 Boolean201112 Boolean201213 BooleanThirdPartyStorage BooleanSurveyFilled GTONil201213 PhysicalWard BooleanRegisteredIEC BooleanRegisteredCE BooleanServiceTax) 
 keep if _merge==1|_merge==3
 
 
@@ -265,196 +263,230 @@ gen Treat=0 if DummyRetailer==1&DummyWholeSaler==0&DummyManufacturer==0
 replace Treat=1 if DummyRetailer==0&DummyWholeSaler==1&DummyManufacturer==0
 
 
+merge m:1 TaxQuarter using "F:\2a2b_analysis\PriceIndexQuarterly.dta", keepusing(cpi) generate(_merge_real)
+drop _merge_real
+
+
+gen RealMoneyDeposited=MoneyDeposited/cpi
+gen RealTaxCreditBeforeAdjustment=TaxCreditBeforeAdjustment/cpi
+gen RealOutputTaxBeforeAdjustment=OutputTaxBeforeAdjustment/cpi
+gen RealDiff=Diff/cpi
+
+
+
+xtile group1=RealMoneyDeposited if Treat==1&TaxQuarter==1 , nq(10) 
+gen TreatGroup=group1
+
+drop group*
+
+xtile group1=RealMoneyDeposited if Treat==0&TaxQuarter==1 , nq(10) 
+
+gen ControlGroup=group1
+
+drop group*
+//Regression of the top 10% of the firms
+gen Treat2=1 if Treat==1&TreatGroup==10&TaxQuarter==1
+replace Treat2=0 if Treat==0&ControlGroup==10&TaxQuarter==1
+
+
+gsort DealerTIN TaxQuarter
+by DealerTIN: replace Treat2=Treat2[_n-1] if Treat2>=.
+
+keep if Treat2!=.
+
+drop Treat 
+rename Treat2 Treat
+
+gen iTaxQuarter1=0
+gen iTaxQuarter2=0
+gen iTaxQuarter3=0
+gen iTaxQuarter4=0
+gen iTaxQuarter5=0
+gen iTaxQuarter6=0
+gen iTaxQuarter7=0
+gen iTaxQuarter8=0
+gen iTaxQuarter9=0
+gen iTaxQuarter10=0
+gen iTaxQuarter11=0
+gen iTaxQuarter12=0
+gen iTaxQuarter13=0
+gen iTaxQuarter14=0
+gen iTaxQuarter15=0
+gen iTaxQuarter16=0
+gen iTaxQuarter17=0
+gen iTaxQuarter18=0
+gen iTaxQuarter19=0
+gen iTaxQuarter20=0
+
+replace iTaxQuarter1=1 if TaxQuarter==1
+replace iTaxQuarter2=1 if TaxQuarter==2
+replace iTaxQuarter3=1 if TaxQuarter==3
+replace iTaxQuarter4=1 if TaxQuarter==4
+replace iTaxQuarter5=1 if TaxQuarter==5
+replace iTaxQuarter6=1 if TaxQuarter==6
+replace iTaxQuarter7=1 if TaxQuarter==7
+replace iTaxQuarter8=1 if TaxQuarter==8
+replace iTaxQuarter9=1 if TaxQuarter==9
+replace iTaxQuarter10=1 if TaxQuarter==10
+replace iTaxQuarter11=1 if TaxQuarter==11
+replace iTaxQuarter12=1 if TaxQuarter==12
+replace iTaxQuarter13=1 if TaxQuarter==13
+replace iTaxQuarter14=1 if TaxQuarter==14
+replace iTaxQuarter15=1 if TaxQuarter==15
+replace iTaxQuarter16=1 if TaxQuarter==16
+replace iTaxQuarter17=1 if TaxQuarter==17
+replace iTaxQuarter18=1 if TaxQuarter==18
+replace iTaxQuarter19=1 if TaxQuarter==19
+replace iTaxQuarter20=1 if TaxQuarter==20
+
 destring DealerTIN, replace
-xtset DealerTIN TaxYear
-
-*drop Post iPostTreat
-
-gen Post=0
-replace Post=1 if TaxYear>2
-
-gen iPostTreat=Post*Treat
-gen iTaxYear1=0
-gen iTaxYear2=0
-gen iTaxYear3=0
-gen iTaxYear4=0
-gen iTaxYear5=0
-
-replace iTaxYear1=1 if TaxYear==1
-replace iTaxYear2=1 if TaxYear==2
-replace iTaxYear3=1 if TaxYear==3
-replace iTaxYear4=1 if TaxYear==4
-replace iTaxYear5=1 if TaxYear==5
-
-gen iTreat1=Treat*iTaxYear1
-gen iTreat2=Treat*iTaxYear2
-gen iTreat3=Treat*iTaxYear3
-gen iTreat4=Treat*iTaxYear4	
-gen iTreat5=Treat*iTaxYear5
+xtset DealerTIN TaxQuarter
 
 
-label variable iTreat1 "-2"
-label variable iTreat2 "-1"
-label variable iTreat3 "0"
-label variable iTreat4 "+1"
-label variable iTreat5 "+2"
+gen iTreatT1=Treat*iTaxQuarter1
+gen iTreatT2=Treat*iTaxQuarter2
+gen iTreatT3=Treat*iTaxQuarter3
+gen iTreatT4=Treat*iTaxQuarter4
+gen iTreatT5=Treat*iTaxQuarter5
+gen iTreatT6=Treat*iTaxQuarter6
+gen iTreatT7=Treat*iTaxQuarter7
+gen iTreatT8=Treat*iTaxQuarter8
+gen iTreatT9=Treat*iTaxQuarter9
+gen iTreatT10=Treat*iTaxQuarter10
+gen iTreatT11=Treat*iTaxQuarter11
+gen iTreatT12=Treat*iTaxQuarter12
+gen iTreatT13=Treat*iTaxQuarter13
+gen iTreatT14=Treat*iTaxQuarter14
+gen iTreatT15=Treat*iTaxQuarter15
+gen iTreatT16=Treat*iTaxQuarter16
+gen iTreatT17=Treat*iTaxQuarter17
+gen iTreatT18=Treat*iTaxQuarter18
+gen iTreatT19=Treat*iTaxQuarter19
+gen iTreatT20=Treat*iTaxQuarter20
+
+label variable iTreatT1 "-8"
+label variable iTreatT2 "-7"
+label variable iTreatT3 "-6"
+label variable iTreatT4 "-5"
+label variable iTreatT5 "-4"
+label variable iTreatT6 "-3"
+label variable iTreatT7 "-2"
+label variable iTreatT8 "-1"
+label variable iTreatT9 "0"
+label variable iTreatT10 "+1"
+label variable iTreatT11 "+2"
+label variable iTreatT12 "+3"
+label variable iTreatT13 "+4"
+label variable iTreatT14 "+5"
+label variable iTreatT15 "+6"
+label variable iTreatT16 "+7"
+label variable iTreatT17 "+8"
+label variable iTreatT18 "+9"
+label variable iTreatT19 "+10"
+label variable iTreatT20 "+11"
 
 
-
-matrix C = J(3,5,.)
+matrix C = J(3,20,.)
 matrix rownames C = mean ll95 ul95
-matrix colnames C = iTreat1 iTreat2 iTreat3 iTreat4 iTreat5
+matrix colnames C = iTreatT1 iTreatT2 iTreatT3 iTreatT4 iTreatT5 iTreatT6 iTreatT7 iTreatT8 iTreatT9 iTreatT10 iTreatT11 iTreatT12 iTreatT13 iTreatT14 iTreatT15 iTreatT16 iTreatT17 iTreatT18 iTreatT19 iTreatT20
 
-matrix C[1,2]=0 
-matrix C[2,2]=0 
-matrix C[3,2]=0 
+matrix C[1,8]=0 
+matrix C[2,8]=0 
+matrix C[3,8]=0 
 
 
-# delimit;
-areg PositiveContribution iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
+#delimit;
+local TaxQuarterDummy "iTaxQuarter2 iTaxQuarter3 iTaxQuarter4 iTaxQuarter5 iTaxQuarter6 iTaxQuarter7 iTaxQuarter8 iTaxQuarter9 iTaxQuarter10 iTaxQuarter11 iTaxQuarter12 iTaxQuarter13 iTaxQuarter14 iTaxQuarter15 iTaxQuarter16 iTaxQuarter17 iTaxQuarter18 iTaxQuarter19 iTaxQuarter20" ;
+local TreatDummy "iTreatT1 iTreatT2 iTreatT3 iTreatT4 iTreatT5 iTreatT6 iTreatT7 iTreatT9 iTreatT10 iTreatT11 iTreatT12 iTreatT13 iTreatT14 iTreatT15 iTreatT16 iTreatT17 iTreatT18 iTreatT19 iTreatT20";
+areg PositiveContribution `TaxQuarterDummy' `TreatDummy', absorb(DealerTIN) cluster(DealerTIN);
+test iTreatT1=iTreatT2=0=iTreatT3=iTreatT4=iTreatT5=iTreatT6=iTreatT7;
+forvalues i = 1(1)20 {;
+	if(`i'!=8){;
+	matrix C[1,`i']=_b[iTreatT`i'];
+	matrix C[2,`i']=_b[iTreatT`i']-1.96*_se[iTreatT`i'];
+	matrix C[3,`i']=_b[iTreatT`i']+1.96*_se[iTreatT`i'];
 	};
 };
-coefplot (matrix(C), ci((2 3))), drop(_cons Post iTaxYear2 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
+coefplot (matrix(C), ci((2 3))), drop(_cons `TaxQuarterDummy') vertical yline(0) xline(8.5)
 	     graphregion(color(white))
-		  xtitle("Years with respect to the introduction of the policy")
-	     title("Coefficient for PositiveContribution") 
-	     note( "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\PositiveContribution.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\PositiveContribution.pdf", as(pdf) replace;
-		 
-# delimit;
-areg VatIncrease iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
+		 xtitle("Quarters with respect to the introduction of the policy");
+graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\PositiveContribution_TopDecile.gph";
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\PositiveContribution_TopDecile.pdf", as(pdf) replace;
+
+
+#delimit;
+local TaxQuarterDummy "iTaxQuarter2 iTaxQuarter3 iTaxQuarter4 iTaxQuarter5 iTaxQuarter6 iTaxQuarter7 iTaxQuarter8 iTaxQuarter9 iTaxQuarter10 iTaxQuarter11 iTaxQuarter12 iTaxQuarter13 iTaxQuarter14 iTaxQuarter15 iTaxQuarter16 iTaxQuarter17 iTaxQuarter18 iTaxQuarter19 iTaxQuarter20" ;
+local TreatDummy "iTreatT1 iTreatT2 iTreatT3 iTreatT4 iTreatT5 iTreatT6 iTreatT7 iTreatT9 iTreatT10 iTreatT11 iTreatT12 iTreatT13 iTreatT14 iTreatT15 iTreatT16 iTreatT17 iTreatT18 iTreatT19 iTreatT20";
+areg RealMoneyDeposited `TaxQuarterDummy' `TreatDummy', absorb(DealerTIN) cluster(DealerTIN);
+test iTreatT1=iTreatT2=0=iTreatT3=iTreatT4=iTreatT5=iTreatT6=iTreatT7;
+forvalues i = 1(1)20 {;
+	if(`i'!=8){;
+	matrix C[1,`i']=_b[iTreatT`i'];
+	matrix C[2,`i']=_b[iTreatT`i']-1.96*_se[iTreatT`i'];
+	matrix C[3,`i']=_b[iTreatT`i']+1.96*_se[iTreatT`i'];
 	};
 };
-coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-         graphregion(color(white))
-	     title("Coefficient for VatIncrease")  
-		 xtitle("Years with respect to the introduction of the policy")
-	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\VatIncrease.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\VatIncrease.pdf", as(pdf) replace;
+coefplot (matrix(C), ci((2 3))), drop(_cons `TaxQuarterDummy') vertical yline(0) xline(8.5)
+	     graphregion(color(white))
+		 xtitle("Quarters with respect to the introduction of the policy");
+graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\VATDeposited_TopDecile_Real.gph";
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\VATDeposited_TopDecile_Real.pdf", as(pdf) replace;
 
-		 
-		 
-		 
-# delimit;
-areg MoneyDeposited iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
+
+#delimit;
+local TaxQuarterDummy "iTaxQuarter2 iTaxQuarter3 iTaxQuarter4 iTaxQuarter5 iTaxQuarter6 iTaxQuarter7 iTaxQuarter8 iTaxQuarter9 iTaxQuarter10 iTaxQuarter11 iTaxQuarter12 iTaxQuarter13 iTaxQuarter14 iTaxQuarter15 iTaxQuarter16 iTaxQuarter17 iTaxQuarter18 iTaxQuarter19 iTaxQuarter20" ;
+local TreatDummy "iTreatT1 iTreatT2 iTreatT3 iTreatT4 iTreatT5 iTreatT6 iTreatT7 iTreatT9 iTreatT10 iTreatT11 iTreatT12 iTreatT13 iTreatT14 iTreatT15 iTreatT16 iTreatT17 iTreatT18 iTreatT19 iTreatT20";
+areg RealTaxCreditBeforeAdjustment `TaxQuarterDummy' `TreatDummy', absorb(DealerTIN) cluster(DealerTIN);
+test iTreatT1=iTreatT2=0=iTreatT3=iTreatT4=iTreatT5=iTreatT6=iTreatT7;
+forvalues i = 1(1)20 {;
+	if(`i'!=8){;
+	matrix C[1,`i']=_b[iTreatT`i'];
+	matrix C[2,`i']=_b[iTreatT`i']-1.96*_se[iTreatT`i'];
+	matrix C[3,`i']=_b[iTreatT`i']+1.96*_se[iTreatT`i'];
 	};
 };
-coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-         graphregion(color(white))
-	     title("Coefficient for MoneyDeposited")
-		 xtitle("Years with respect to the introduction of the policy")
-	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\MoneyDeposited.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\MoneyDeposited.pdf", as(pdf) replace;
+coefplot (matrix(C), ci((2 3))), drop(_cons `TaxQuarterDummy') vertical yline(0) xline(8.5)
+	     graphregion(color(white))
+		 xtitle("Quarters with respect to the introduction of the policy");
+graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\TaxCreditBeforeAdjustment_TopDecile_Real.gph";
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\TaxCreditBeforeAdjustment_TopDecile_Real.pdf", as(pdf) replace;
 
-		 
-# delimit;
-areg TaxCreditBeforeAdjustment iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
+
+#delimit;
+local TaxQuarterDummy "iTaxQuarter2 iTaxQuarter3 iTaxQuarter4 iTaxQuarter5 iTaxQuarter6 iTaxQuarter7 iTaxQuarter8 iTaxQuarter9 iTaxQuarter10 iTaxQuarter11 iTaxQuarter12 iTaxQuarter13 iTaxQuarter14 iTaxQuarter15 iTaxQuarter16 iTaxQuarter17 iTaxQuarter18 iTaxQuarter19 iTaxQuarter20" ;
+local TreatDummy "iTreatT1 iTreatT2 iTreatT3 iTreatT4 iTreatT5 iTreatT6 iTreatT7 iTreatT9 iTreatT10 iTreatT11 iTreatT12 iTreatT13 iTreatT14 iTreatT15 iTreatT16 iTreatT17 iTreatT18 iTreatT19 iTreatT20";
+areg RealOutputTaxBeforeAdjustment `TaxQuarterDummy' `TreatDummy', absorb(DealerTIN) cluster(DealerTIN);
+test iTreatT1=iTreatT2=0=iTreatT3=iTreatT4=iTreatT5=iTreatT6=iTreatT7;
+forvalues i = 1(1)20 {;
+	if(`i'!=8){;
+	matrix C[1,`i']=_b[iTreatT`i'];
+	matrix C[2,`i']=_b[iTreatT`i']-1.96*_se[iTreatT`i'];
+	matrix C[3,`i']=_b[iTreatT`i']+1.96*_se[iTreatT`i'];
 	};
 };
-coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-         graphregion(color(white))
-	     title("Coefficient for TaxCredit")
-		 xtitle("Years with respect to the introduction of the policy")
-	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\TaxCreditBeforeAdjustment.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\TaxCreditBeforeAdjustment.pdf", as(pdf) replace;
+coefplot (matrix(C), ci((2 3))), drop(_cons `TaxQuarterDummy') vertical yline(0) xline(8.5)
+	     graphregion(color(white))
+		 xtitle("Quarters with respect to the introduction of the policy");
+graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\OutputTaxBeforeAdjustment_TopDecile_Real.gph";
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\OutputTaxBeforeAdjustment_TopDecile_Real.pdf", as(pdf) replace;
 
-		 
-# delimit;
-areg OutputTaxBeforeAdjustment iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
+
+
+#delimit;
+local TaxQuarterDummy "iTaxQuarter2 iTaxQuarter3 iTaxQuarter4 iTaxQuarter5 iTaxQuarter6 iTaxQuarter7 iTaxQuarter8 iTaxQuarter9 iTaxQuarter10 iTaxQuarter11 iTaxQuarter12 iTaxQuarter13 iTaxQuarter14 iTaxQuarter15 iTaxQuarter16 iTaxQuarter17 iTaxQuarter18 iTaxQuarter19 iTaxQuarter20" ;
+local TreatDummy "iTreatT1 iTreatT2 iTreatT3 iTreatT4 iTreatT5 iTreatT6 iTreatT7 iTreatT9 iTreatT10 iTreatT11 iTreatT12 iTreatT13 iTreatT14 iTreatT15 iTreatT16 iTreatT17 iTreatT18 iTreatT19 iTreatT20";
+areg RealDiff `TaxQuarterDummy' `TreatDummy', absorb(DealerTIN) cluster(DealerTIN);
+test iTreatT1=iTreatT2=0=iTreatT3=iTreatT4=iTreatT5=iTreatT6=iTreatT7;
+forvalues i = 1(1)20 {;
+	if(`i'!=8){;
+	matrix C[1,`i']=_b[iTreatT`i'];
+	matrix C[2,`i']=_b[iTreatT`i']-1.645*_se[iTreatT`i'];
+	matrix C[3,`i']=_b[iTreatT`i']+1.645*_se[iTreatT`i'];
 	};
 };
-coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-         graphregion(color(white))
-	     title("Coefficient for Output Tax")
-		 xtitle("Years with respect to the introduction of the policy")
-	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\OutputTaxBeforeAdjustment.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\OutputTaxBeforeAdjustment.pdf", as(pdf) replace;
+coefplot (matrix(C), ci((2 3))), drop(_cons `TaxQuarterDummy') vertical yline(0) xline(8.5)
+	     graphregion(color(white))
+		 xtitle("Quarters with respect to the introduction of the policy");
+graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\Diff_TopDecile_Real.gph";
+graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Quarter\Diff_TopDecile_Real.pdf", as(pdf) replace;
 
-		 		 		 
-	# delimit;
-	areg Diff iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
-	};
-};
-coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-         graphregion(color(white))
-	     title("Coefficient for OutputTax-InputCredit ")
-		 xtitle("Years with respect to the introduction of the policy")
-	     note( "Coefficient in million rupees." "Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\Diff.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\Diff.pdf", as(pdf) replace;
-
-		 		 		 
-# delimit;
-areg InterstateRatio iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
-	};
-};
-coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-         graphregion(color(white))
-	     title("Coefficient for Central Turnover/Total Turnover ")
-		 xtitle("Years with respect to the introduction of the policy")
-	     note("Number of retailers is 32979 and number of wholesalers is 19515");
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\InterstateRatio.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\InterstateRatio.pdf", as(pdf) replace;
-
-		 
-gen lDiff=log(Diff+1)
-gen Diff2=-Diff
-replace lDiff=-log(Diff2+1) if lDiff==.
-
-# delimit;
-areg lDiff iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 iTreat1 iTreat3  iTreat4 iTreat5, absorb(DealerTIN) cluster(DealerTIN);
-forvalues i = 1(1)5 {;
-	if(`i'!=2){;
-	matrix C[1,`i']=_b[iTreat`i'];
-	matrix C[2,`i']=_b[iTreat`i']-1.96*_se[iTreat`i'];
-	matrix C[3,`i']=_b[iTreat`i']+1.96*_se[iTreat`i'];
-	};
-};
-coefplot (matrix(C), ci((2 3))), drop(_cons iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5) vertical yline(0) xline(2.5)
-         graphregion(color(white))
-	     title("Coefficient for Log(OutputTax-InputCredit)")
-		 xtitle("Years with respect to the introduction of the policy")
-	     note("Number of retailers is 32979 and number of wholesalers is 19515" "If the difference is negative, we do -(log(abs(diff)))");
-
-graph save Graph "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\LogDiff.gph";
-graph export "F:\2a2b_analysis\RetailerVsWholeSaler\EventStudy\Annual\LogDiff.pdf", as(pdf) replace;
