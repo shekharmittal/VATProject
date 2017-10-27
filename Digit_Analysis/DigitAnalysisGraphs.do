@@ -200,92 +200,53 @@ gsort DealerTIN TaxYear
 by DealerTIN: gen DeltaMoneyDeposited=MoneyDeposited-MoneyDeposited[_n-1]
 by DealerTIN: gen GrowthRate=DeltaMoneyDeposited/MoneyDeposited[_n-1]
 
+gen VatIncrease=0 if DeltaMoneyDeposited!=.
+replace VatIncrease=1 if DeltaMoneyDeposited>0&DeltaMoneyDeposited!=.
 
-gen ZeroTurnover=0
-replace ZeroTurnover=1 if TurnoverGross==0
-
-drop if ZeroTurnover==1
-
-replace TurnoverGross=TurnoverGross/100000
-
-egen bin1=cut(TurnoverGross), at(0(1)2000)
-
-replace TurnoverGross=TurnoverGross*10
-egen bin2=cut(TurnoverGross), at(0(1)2000)
-
-bys TaxYear bin1: gen Count=_N
-by TaxYear bin1: gen SerialCount=_n
-by TaxYear bin1: gen VatRatio=MoneyDeposited/TurnoverGross
-by TaxYear bin1: egen PC=mean(PositiveContribution)
-
-keep if SerialCount==1
-
-twoway (connected Count bin1 if TaxYear==1&bin1<600, sort) (fpfit Count bin1 if TaxYear==1&bin1<60&(bin1<9|bin1>11)), xline(10)
-
-#delimit ;
-twoway (connected Count bin1 if TaxYear==1&bin1>400&bin1<600, sort) 
-       (fpfit Count bin1 if TaxYear==1&bin1>400&bin1<600&(bin1<495|bin1>505), estopts(degree(4)))
-	   (connected Count bin1 if TaxYear==4&bin1>400&bin1<600, sort) 
-	   (fpfit Count bin1 if TaxYear==4&bin1>400&bin1<600&(bin1<495|bin1>505), estopts(degree(4)))
-	   , xline(500);
+gen VatDecrease=0 if DeltaMoneyDeposited!=.
+replace VatDecrease=1 if DeltaMoneyDeposited<0&DeltaMoneyDeposited
 
 
-	   
-#delimit ;
-twoway (connected Count bin1 if TaxYear==1&bin1<60, sort) 
-       (fpfit Count bin1 if TaxYear==1&bin1<60&((bin1<49|bin1>51)|(bin1<9|bin1>11)), estopts(degree(4)))
-	   , xline(10) xline(50);
-	   
 
-	   #delimit ;
-twoway (connected Count bin1 if TaxYear==2&bin1<60, sort) 
-       (fpfit Count bin1 if TaxYear==2&bin1<60&((bin1<49|bin1>51)|(bin1<9|bin1>11)), estopts(degree(4)))
-	   , xline(10) xline(50);
-
-	   
-
-	   
-#delimit ;
-twoway (connected Count bin1 if TaxYear==1&bin1<20, sort) 
-       (fpfit Count bin1 if TaxYear==1&bin1<20&((bin1<9|bin1>11)), estopts(degree(4)))
-	   , xline(10) xline(50);
-	   
-
-#delimit ;
-twoway (connected Count bin1 if TaxYear==2&bin1<20, sort) 
-       (fpfit Count bin1 if TaxYear==2&bin1<20&((bin1<9|bin1>11)), estopts(degree(4)))
-	   , xline(10) xline(50);
-
-
-	   #delimit ;
-twoway (connected Count bin1 if TaxYear==2&bin1>400&bin1<600, sort) 
-       (fpfit Count bin1 if TaxYear==2&bin1>400&bin1<600&((bin1<495|bin1>505)), estopts(degree(4)))
-	   , xline(500);
-
-
-	   
-	   #delimit ;
-twoway (connected Count bin1 if TaxYear==1&bin1>400&bin1<600, sort) 
-       (fpfit Count bin1 if TaxYear==1&bin1>400&bin1<600&((bin1<495|bin1>505)), estopts(degree(4)))
-	   , xline(500);
-	   
-	   #delimit ;
-twoway (connected Count bin1 if TaxYear==3&bin1>400&bin1<600, sort) 
-       (fpfit Count bin1 if TaxYear==3&bin1>400&bin1<600&((bin1<495|bin1>505)), estopts(degree(4)))
-	   , xline(499.5);
-	   
-
-	   	   #delimit ;
-twoway (connected Count bin1 if TaxYear==4&bin1>400&bin1<600, sort) 
-       (fpfit Count bin1 if TaxYear==4&bin1>400&bin1<600&((bin1<495|bin1>505)), estopts(degree(4)))
-	   , xline(499.5);
-
-	   
-twoway fpfit Count bin1 if TaxYear==1
-twoway fpfit Count bin1 if TaxYear==1&bin1<30
-help binscatter
-binscatter Count bin1 if TaxYear==1
-binscatter Count bin1 if TaxYear==1&bin1<30
-tab bin1 if TaxYear==1&bin1<30
-tab bin1
-tab bin1 if bin1<30
+tab TaxYear VatIncrease
+tab TaxYear VatIncrease, row
+tab TaxYear VatDecrease, row
+tab TaxYear if DeltaMoneyDeposited==0
+tab TaxYear if MoneyDeposited==0
+tab TaxYear PositiveContribution
+tab TaxYear PositiveContribution, row
+gen x=MoneyDeposited%10
+gen x=mod(MoneyDeposited,10)
+histogram x if TaxYear==1
+histogram x if TaxYear==1, fraction
+histogram x if TaxYear==1&MoneyDeposited!=0, fraction
+gen x=mod(TurnoverGross,10)
+gen y=mod(TurnoverGross,10)
+histogram y if TaxYear==1, fraction
+histogram y if TaxYear==1&TurnoverGross!=0, fraction
+histogram y if TurnoverGross!=0, fraction by(TaxYear, total)
+histogram x if MoneyDeposited!=0, fraction by(TaxYear, total)
+gen Top=0
+gsort TaxYear -MoneyDeposited
+by TaxYear: gen Rank=_n
+gen Top=1 if Rank<1000
+replace Top=1 if Rank<1000
+histogram x if MoneyDeposited!=0, fraction by(TaxYear, total)
+histogram x if MoneyDeposited!=0&Top==1, fraction by(TaxYear, total)
+histogram x if MoneyDeposited!=0&Top==0, fraction by(TaxYear, total)
+histogram y if TurnoverGross!=0&Top==0, fraction by(TaxYear, total)
+histogram y if TurnoverGross!=0&Top==1, fraction by(TaxYear, total)
+histogram y if TurnoverGross!=0&Top==0, fraction by(TaxYear, total)
+histogram x if MoneyDeposited!=0&Top==0, fraction by(TaxYear, total)
+histogram x if MoneyDeposited!=0&Top==1, fraction by(TaxYear, total)
+histogram x if MoneyDeposited!=0&Top==1, fraction by(TaxYear, total) graphregion(inner(white))
+histogram x if MoneyDeposited!=0&Top==1, fraction by(TaxYear, total) graphregion(color(white))
+histogram x if MoneyDeposited!=0&Top==1, fraction by(TaxYear, total) graphregion(color(white)) title("Distribution of Last Digit, Money Deposited, Top 1000")
+histogram x if MoneyDeposited!=0&Top==1, fraction by(TaxYear, total) graphregion(color(white))
+graph export "F:\Digit_Analysis\MoneyDeposited_LastDigit_Top1000.pdf", as(pdf) replace
+histogram x if MoneyDeposited!=0&Top==0, fraction by(TaxYear, total) graphregion(color(white))
+graph export "F:\Digit_Analysis\MoneyDeposited_LastDigit_Rest.pdf", as(pdf) replace
+histogram y if TurnoverGross!=0&Top==0, fraction by(TaxYear, total)
+graph export "F:\Digit_Analysis\TurnoverGross_LastDigit_Rest.pdf", as(pdf) replace
+histogram y if TurnoverGross!=0&Top==1, fraction by(TaxYear, total)
+graph export "F:\Digit_Analysis\TurnoverGross_LastDigit_Top1000.pdf", as(pdf) replace

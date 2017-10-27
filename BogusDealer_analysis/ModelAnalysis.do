@@ -448,7 +448,7 @@ sum TurnoverGross MoneyDeposited TurnoverCentral AllCentral AllLocal ZeroTurnove
 //Comparing the difference in ranking of firms
 gsort DealerTIN TaxQuarter
 by DealerTIN: egen MaxRank=max(RankModelAll)
-by DealerTIN: egen MinRank=min(RankModelAll)
+by DealerTIN: egCen MinRank=min(RankModelAll)
 by DealerTIN: egen MeanRank=mean(RankModelAll)
 by DealerTIN: gen DealerCount=_n
 //by DealerTIN: egen sdRank=(RankModelAll)

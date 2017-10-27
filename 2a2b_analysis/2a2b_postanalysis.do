@@ -312,6 +312,20 @@ restore
 graph save Graph "F:\2a2b_analysis\PostAnalysis\TotaVATDeposited_ALL.gph"
 graph export "F:\2a2b_analysis\PostAnalysis\TotaVATDeposited_ALL.pdf", as(pdf) replace
 
+
+#delimit ;
+preserve;
+//keep if TotalCount==5;
+collapse (sum) MoneyDeposited TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment , by(TaxYear);
+twoway (connected TaxCreditBeforeAdjustment TaxYear) (connected OutputTaxBeforeAdjustment TaxYear), 
+       title("Total Input Credit and Output Tax (for all firms)") 
+	   note("Amount in billion rupees. Matching started after year 2") xline(2.5) 
+	   ytitle("Total amounts (in billion rupees)") 
+	   legend(order(1 "Input Credits" 2 "Output Tax"))
+	   graphregion(color(white));
+restore;
+
+
 #delimit ;
 preserve;
 collapse (mean) MoneyDeposited TaxCreditBeforeAdjustment (count) Dummy , by(TaxYear);

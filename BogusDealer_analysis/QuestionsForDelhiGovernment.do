@@ -1,3 +1,14 @@
+/***************************************************/
+****************************************************
+**Date: August 14, 2017*****************************
+**Goal is to answer all the questions raised by Delhi officers, empricially**
+** Plot Interstate ratio of trends for both bogus and non-bogus firms ** 
+** Plot C Sales trends for both bogus and non-bogus firms **
+** Plot Value Add trends for both bogus and non-bogus firms **
+** Plot total number of firms, all local, all central for both bogus and non-bogus **
+
+
+
 cd "E:\data"
 
 //use "PreliminaryAnalysis\returns\form16_data_v3_0901.dta", clear
@@ -132,9 +143,6 @@ label variable PercPurchaseUnregisteredDealer "A measure of amount purchased fro
 label variable TotalValueAdded "Total value added, (TurnoverGross-TotalPurchases)"
 label variable TotalPurchases "Total purchases made: PurchaseCapitalGoods+PurchaseOtherGoods+PurchaseUnregisteredDealer"
 
-//gen PositiveContribution=0
-//replace PositiveContribution=1 if MoneyDeposited>0
-
 
 gsort DealerTIN TaxYear TaxHalfyear TaxQuarter TaxMonth
 gen AnnualDummy=1 if TaxPeriod=="Annual-2010"|TaxPeriod=="Annual-2011"
@@ -187,105 +195,140 @@ by DealerTIN: replace QuarterlyDummy=QuarterlyDummy[_n-1] if QuarterlyDummy>=.
 by DealerTIN: replace MonthlyDummy=MonthlyDummy[_n-1] if MonthlyDummy>=.
 drop if QuarterlyDummy==1&MonthlyDummy==1&TaxYear==3
 
+//drop if TaxQuarter==0
+//collapse (sum) RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxYear)
 
-collapse (firstnm) WardName (sum)AdjustCSTLiability RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxYear)
-
-gen PositiveContribution=0
-replace PositiveContribution=1 if MoneyDeposited>0
-
-gsort DealerTIN TaxYear
-by DealerTIN: gen TotalCount=_N
-by DealerTIN: gen YearCount=_n
-gsort DealerTIN TaxYear
-by DealerTIN: gen DeltaMoneyDeposited=MoneyDeposited-MoneyDeposited[_n-1]
-by DealerTIN: gen GrowthRate=DeltaMoneyDeposited/MoneyDeposited[_n-1]
+collapse (sum) RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxQuarter)
+drop if TaxQuarter==0
 
 
 gen ZeroTurnover=0
 replace ZeroTurnover=1 if TurnoverGross==0
 
-drop if ZeroTurnover==1
+gen PositiveContribution=0
+replace PositiveContribution=1 if MoneyDeposited>0
 
-replace TurnoverGross=TurnoverGross/100000
+gen AllCentral=0
+replace AllCentral=1 if TurnoverGross==TurnoverCentral&TurnoverGross!=0
 
-egen bin1=cut(TurnoverGross), at(0(1)2000)
+gen AllLocal=0
+replace AllLocal=1 if TurnoverCentral==0&TurnoverGross!=0
 
-replace TurnoverGross=TurnoverGross*10
-egen bin2=cut(TurnoverGross), at(0(1)2000)
+order CarryForwardTaxCredit, before(BalanceCarriedNextTaxPeriod)
 
-bys TaxYear bin1: gen Count=_N
-by TaxYear bin1: gen SerialCount=_n
-by TaxYear bin1: gen VatRatio=MoneyDeposited/TurnoverGross
-by TaxYear bin1: egen PC=mean(PositiveContribution)
+gen ZeroTax=(ExemptedSales==TurnoverLocal)&TurnoverLocal!=0
 
-keep if SerialCount==1
+gen Diff=OutputTaxBeforeAdjustment-TaxCreditBeforeAdjustment
 
-twoway (connected Count bin1 if TaxYear==1&bin1<600, sort) (fpfit Count bin1 if TaxYear==1&bin1<60&(bin1<9|bin1>11)), xline(10)
+gsort DealerTIN TaxYear
+by DealerTIN: gen TotalCount=_N
+
+
+replace TurnoverGross=TurnoverGross/1000000
+replace MoneyDeposited=MoneyDeposited/1000000
+replace TurnoverCentral=TurnoverCentral/1000000
+replace TurnoverLocal=TurnoverLocal/1000000
+replace RefundClaimed=RefundClaimed/1000000
+replace InterStateSaleCD=InterStateSaleCD/1000000
+replace InterStateSaleCE1E2=InterStateSaleCE1E2/1000000
+gen VatRatio=MoneyDeposited/TurnoverGross
+gen InterStateRatio=TurnoverCentral/TurnoverGross
+gen LocalVatRatio=MoneyDeposited/TurnoverLocal
+gen RatioExemptedSales=ExemptedSales/TurnoverGross
+gen RatioPurchaseUnregisteredDealer=PurchaseUnregisteredDealer/TurnoverGross
+gen LocalRatio=TurnoverLocal/TurnoverGross
+gen RefundClaimedRatio=RefundClaimed/TurnoverGross
+gen InterStateC=(InterStateSaleCD+InterStateSaleCE1E2)/TurnoverGross
+
+
+merge m:1 DealerTIN using "E:\data\PreliminaryAnalysis\BogusDealers\BogusIdentifiedFromOnlineGovernment.dta", generate(_merge_bogus2)
+drop if _merge_bogus2==2
+gen SecondBogusDummy=0
+replace SecondBogusDummy=1 if Bogus=="YES"
+
+
+drop if TaxQuarter<9
+drop if TaxQuarter==12
+
+table TaxQuarter SecondBogusDummy, c(mean InterStateRatio)
+
+
 
 #delimit ;
-twoway (connected Count bin1 if TaxYear==1&bin1>400&bin1<600, sort) 
-       (fpfit Count bin1 if TaxYear==1&bin1>400&bin1<600&(bin1<495|bin1>505), estopts(degree(4)))
-	   (connected Count bin1 if TaxYear==4&bin1>400&bin1<600, sort) 
-	   (fpfit Count bin1 if TaxYear==4&bin1>400&bin1<600&(bin1<495|bin1>505), estopts(degree(4)))
-	   , xline(500);
+preserve;
+collapse (mean) InterStateRatio, by(TaxQuarter SecondBogusDummy);
+twoway (connected InterStateRatio TaxQuarter if SecondBogusDummy==1)(connected InterStateRatio TaxQuarter if SecondBogusDummy==0) 
+	   if TaxQuarter<17, ylabel(#5) ytitle("TurnoverCentral/Gross Turnover") 
+	   legend(order(1 "Bogus Firms" 2 "Non Bogus Firms") region(lcolor(none))) 
+	   title("Interstate Ratio of Bogus Firms")
+	   graphregion(color(white))
+	   note(" From Q1,2012-13 to Q4, 2013-14");
+	   restore;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\Interstateratio_trends_bogus.gph", replace
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\Interstateratio_trends_bogus.pdf", as(pdf) replace
 
 
-	   
-#delimit ;
-twoway (connected Count bin1 if TaxYear==1&bin1<60, sort) 
-       (fpfit Count bin1 if TaxYear==1&bin1<60&((bin1<49|bin1>51)|(bin1<9|bin1>11)), estopts(degree(4)))
-	   , xline(10) xline(50);
-	   
-
-	   #delimit ;
-twoway (connected Count bin1 if TaxYear==2&bin1<60, sort) 
-       (fpfit Count bin1 if TaxYear==2&bin1<60&((bin1<49|bin1>51)|(bin1<9|bin1>11)), estopts(degree(4)))
-	   , xline(10) xline(50);
-
-	   
-
-	   
-#delimit ;
-twoway (connected Count bin1 if TaxYear==1&bin1<20, sort) 
-       (fpfit Count bin1 if TaxYear==1&bin1<20&((bin1<9|bin1>11)), estopts(degree(4)))
-	   , xline(10) xline(50);
-	   
 
 #delimit ;
-twoway (connected Count bin1 if TaxYear==2&bin1<20, sort) 
-       (fpfit Count bin1 if TaxYear==2&bin1<20&((bin1<9|bin1>11)), estopts(degree(4)))
-	   , xline(10) xline(50);
+preserve;
+collapse (mean) InterStateC, by(TaxQuarter SecondBogusDummy);
+twoway (connected InterStateC TaxQuarter if SecondBogusDummy==1)(connected InterStateC TaxQuarter if SecondBogusDummy==0) 
+	   if TaxQuarter<17, ylabel(#5) ytitle("Sales against C forms/Gross Turnover") 
+	   legend(order(1 "Bogus Firms" 2 "Non Bogus Firms") region(lcolor(none))) 
+	   title("C form sales of Bogus Firms")
+	   graphregion(color(white))
+	   note(" From Q1,2012-13 to Q4, 2013-14");
+	   restore;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\InterstateC_trends_bogus.gph", replace
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\InterstateC_trends_bogus.pdf", as(pdf) replace
+
+gen dummy=1
 
 
-	   #delimit ;
-twoway (connected Count bin1 if TaxYear==2&bin1>400&bin1<600, sort) 
-       (fpfit Count bin1 if TaxYear==2&bin1>400&bin1<600&((bin1<495|bin1>505)), estopts(degree(4)))
-	   , xline(500);
+#delimit ;
+preserve;
+collapse (count) dummy (mean) AllLocal AllCentral, by(TaxQuarter SecondBogusDummy);
+twoway (connected dummy TaxQuarter if SecondBogusDummy==1, yaxis(2))
+       (connected AllLocal TaxQuarter if SecondBogusDummy==1) 
+	   (connected AllCentral TaxQuarter if SecondBogusDummy==1) 
+	   if TaxQuarter<17, ylabel(#5) 
+	   legend(order(1 "No. of Bogus Firms" 2 "Bogus Firms with Only Local Sales" 3 "Bogus Firms with Only Central Sales") region(lcolor(none))) 
+	   title("Type of Bogus Firms")
+	   graphregion(color(white))
+	   note(" From Q1,2012-13 to Q4, 2013-14");
+	   restore;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\Type_Trends_Bogus.gph", replace
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\Type_Trends_Bogus.pdf", as(pdf) replace
 
 
-	   
-	   #delimit ;
-twoway (connected Count bin1 if TaxYear==1&bin1>400&bin1<600, sort) 
-       (fpfit Count bin1 if TaxYear==1&bin1>400&bin1<600&((bin1<495|bin1>505)), estopts(degree(4)))
-	   , xline(500);
-	   
-	   #delimit ;
-twoway (connected Count bin1 if TaxYear==3&bin1>400&bin1<600, sort) 
-       (fpfit Count bin1 if TaxYear==3&bin1>400&bin1<600&((bin1<495|bin1>505)), estopts(degree(4)))
-	   , xline(499.5);
-	   
 
-	   	   #delimit ;
-twoway (connected Count bin1 if TaxYear==4&bin1>400&bin1<600, sort) 
-       (fpfit Count bin1 if TaxYear==4&bin1>400&bin1<600&((bin1<495|bin1>505)), estopts(degree(4)))
-	   , xline(499.5);
+#delimit ;
+preserve;
+collapse (count) dummy (mean) AllLocal AllCentral, by(TaxQuarter SecondBogusDummy);
+twoway (connected AllLocal TaxQuarter if SecondBogusDummy==0) 
+	   (connected AllCentral TaxQuarter if SecondBogusDummy==0) 
+	   if TaxQuarter<17, ylabel(#5) 
+	   legend(order(1 "Non Bogus Firms with Only Local Sales" 2 "Non Bogus Firms with Only Central Sales") region(lcolor(none))) 
+	   title("Type of Non-Bogus Firms")
+	   graphregion(color(white))
+	   note(" From Q1,2012-13 to Q4, 2013-14");
+	   restore;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\Type_Trends_NonBogus.gph", replace
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\Type_Trends_NonBogus.pdf", as(pdf) replace
 
-	   
-twoway fpfit Count bin1 if TaxYear==1
-twoway fpfit Count bin1 if TaxYear==1&bin1<30
-help binscatter
-binscatter Count bin1 if TaxYear==1
-binscatter Count bin1 if TaxYear==1&bin1<30
-tab bin1 if TaxYear==1&bin1<30
-tab bin1
-tab bin1 if bin1<30
+
+
+#delimit ;
+preserve;
+collapse (mean) PositiveContribution, by(TaxQuarter SecondBogusDummy);
+twoway (connected PositiveContribution TaxQuarter if SecondBogusDummy==0) 
+	   (connected PositiveContribution TaxQuarter if SecondBogusDummy==1) 
+	   if TaxQuarter<17, ylabel(#5) 
+	   legend(order(1 "Non Bogus Firms" 2 "Bogus Firms") region(lcolor(none))) 
+	   title("Positive VAT Deposited")
+	   graphregion(color(white))
+	   note(" From Q1,2012-13 to Q4, 2013-14");
+	   restore;
+graph save Graph "E:\data\PreliminaryAnalysis\BogusDealers\PositiveContribution_Trends_Bogus.gph", replace
+graph export "E:\data\PreliminaryAnalysis\BogusDealers\PositiveContribution_Trends_Bogus.pdf", as(pdf) replace
+

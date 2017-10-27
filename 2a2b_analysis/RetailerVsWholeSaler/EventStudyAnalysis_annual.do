@@ -205,6 +205,9 @@ keep if TotalCount==5
 gen VatIncrease=0 if DeltaMoneyDeposited!=.
 replace VatIncrease=1 if DeltaMoneyDeposited>0&DeltaMoneyDeposited!=.
 
+gen VatDecrease=0 if DeltaMoneyDeposited!=.
+replace VatDecrease=1 if DeltaMoneyDeposited<0&DeltaMoneyDeposited
+
 replace MoneyDeposited =MoneyDeposited/1000000
 replace OutputTaxBeforeAdjustment=OutputTaxBeforeAdjustment/1000000
 replace TaxCreditBeforeAdjustment=TaxCreditBeforeAdjustment/1000000

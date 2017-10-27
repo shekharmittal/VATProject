@@ -565,13 +565,6 @@ restore;
 
 
 
-
-
-
-
-
-
-
 #delimit ;
 preserve;
 collapse (mean) UnTaxProp (sum) TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(TaxQuarter bogus_online);
