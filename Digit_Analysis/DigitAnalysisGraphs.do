@@ -208,40 +208,9 @@ replace VatDecrease=1 if DeltaMoneyDeposited<0&DeltaMoneyDeposited
 
 
 
-tab TaxYear VatIncrease
-tab TaxYear VatIncrease, row
-tab TaxYear VatDecrease, row
-tab TaxYear if DeltaMoneyDeposited==0
-tab TaxYear if MoneyDeposited==0
-tab TaxYear PositiveContribution
-tab TaxYear PositiveContribution, row
-gen x=MoneyDeposited%10
 gen x=mod(MoneyDeposited,10)
-histogram x if TaxYear==1
-histogram x if TaxYear==1, fraction
-histogram x if TaxYear==1&MoneyDeposited!=0, fraction
-gen x=mod(TurnoverGross,10)
 gen y=mod(TurnoverGross,10)
-histogram y if TaxYear==1, fraction
-histogram y if TaxYear==1&TurnoverGross!=0, fraction
-histogram y if TurnoverGross!=0, fraction by(TaxYear, total)
-histogram x if MoneyDeposited!=0, fraction by(TaxYear, total)
-gen Top=0
-gsort TaxYear -MoneyDeposited
-by TaxYear: gen Rank=_n
-gen Top=1 if Rank<1000
-replace Top=1 if Rank<1000
-histogram x if MoneyDeposited!=0, fraction by(TaxYear, total)
-histogram x if MoneyDeposited!=0&Top==1, fraction by(TaxYear, total)
-histogram x if MoneyDeposited!=0&Top==0, fraction by(TaxYear, total)
-histogram y if TurnoverGross!=0&Top==0, fraction by(TaxYear, total)
-histogram y if TurnoverGross!=0&Top==1, fraction by(TaxYear, total)
-histogram y if TurnoverGross!=0&Top==0, fraction by(TaxYear, total)
-histogram x if MoneyDeposited!=0&Top==0, fraction by(TaxYear, total)
-histogram x if MoneyDeposited!=0&Top==1, fraction by(TaxYear, total)
-histogram x if MoneyDeposited!=0&Top==1, fraction by(TaxYear, total) graphregion(inner(white))
-histogram x if MoneyDeposited!=0&Top==1, fraction by(TaxYear, total) graphregion(color(white))
-histogram x if MoneyDeposited!=0&Top==1, fraction by(TaxYear, total) graphregion(color(white)) title("Distribution of Last Digit, Money Deposited, Top 1000")
+
 histogram x if MoneyDeposited!=0&Top==1, fraction by(TaxYear, total) graphregion(color(white))
 graph export "F:\Digit_Analysis\MoneyDeposited_LastDigit_Top1000.pdf", as(pdf) replace
 histogram x if MoneyDeposited!=0&Top==0, fraction by(TaxYear, total) graphregion(color(white))
