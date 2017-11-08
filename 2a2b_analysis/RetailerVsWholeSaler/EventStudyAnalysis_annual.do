@@ -188,7 +188,7 @@ by DealerTIN: replace MonthlyDummy=MonthlyDummy[_n-1] if MonthlyDummy>=.
 drop if QuarterlyDummy==1&MonthlyDummy==1&TaxYear==3
 
 
-collapse (firstnm) WardName (sum)AdjustCSTLiability RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxYear)
+collapse (firstnm) WardName (sum) TurnoverAt20 TurnoverAt125 TurnoverAt5 TurnoverAt1 PurchaseGoodsAt1 PurchaseGoodsAt5 PurchaseGoodsAt125 PurchaseGoodsAt20 AdjustCSTLiability RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxYear)
 
 gen PositiveContribution=0
 replace PositiveContribution=1 if MoneyDeposited>0
@@ -216,7 +216,16 @@ replace TurnoverCentral=TurnoverCentral/1000000
 replace TurnoverLocal=TurnoverLocal/1000000
 replace DeltaMoneyDeposited =DeltaMoneyDeposited/1000000
 
-	
+replace TurnoverAt1=TurnoverAt1/1000000
+replace TurnoverAt125=TurnoverAt125/1000000
+replace TurnoverAt20=TurnoverAt20/1000000
+replace TurnoverAt5=TurnoverAt5/1000000
+replace PurchaseGoodsAt1=PurchaseGoodsAt1/1000000
+replace PurchaseGoodsAt125=PurchaseGoodsAt125/1000000
+replace PurchaseGoodsAt20=PurchaseGoodsAt20/1000000
+replace PurchaseGoodsAt5=PurchaseGoodsAt5/1000000
+
+        
 gen VatRatio=MoneyDeposited/TurnoverGross
 gen CreditRatio=TaxCreditBeforeAdjustment/TurnoverGross
 gen TaxRatio=OutputTaxBeforeAdjustment/TurnoverGross
@@ -225,6 +234,18 @@ gen LocalVatRatio=MoneyDeposited/TurnoverLocal
 gen LocalCreditRatio=TaxCreditBeforeAdjustment/TurnoverLocal
 gen LocalTaxRatio=OutputTaxBeforeAdjustment/TurnoverLocal
 gen Diff=OutputTaxBeforeAdjustment-TaxCreditBeforeAdjustment
+
+gen PurchaseGoodsAt1Ratio=PurchaseGoodsAt1/TurnoverGross
+gen PurchaseGoodsAt125Ratio=PurchaseGoodsAt125/TurnoverGross
+gen PurchaseGoodsAt20Ratio=PurchaseGoodsAt20/TurnoverGross
+gen PurchaseGoodsAt5Ratio=PurchaseGoodsAt5/TurnoverGross
+
+gen TurnoverAt1Ratio=TurnoverAt1/TurnoverGross
+gen TurnoverAt125Ratio=TurnoverAt125/TurnoverGross
+gen TurnoverAt20Ratio=TurnoverAt20/TurnoverGross
+gen TurnoverAt5Ratio=TurnoverAt5/TurnoverGross
+
+
 
 
 gen lMoneyDeposited=log(MoneyDeposited)
@@ -311,6 +332,7 @@ matrix colnames C = iTreat1 iTreat2 iTreat3 iTreat4 iTreat5
 matrix C[1,2]=0 
 matrix C[2,2]=0 
 matrix C[3,2]=0 
+
 
 
 # delimit;
