@@ -201,6 +201,9 @@ by DealerTIN: gen DeltaMoneyDeposited=MoneyDeposited-MoneyDeposited[_n-1]
 by DealerTIN: gen GrowthRate=DeltaMoneyDeposited/MoneyDeposited[_n-1]
 
 
+gen AllCentral=0
+replace AllCentral=1 if TurnoverGross==TurnoverCentral&TurnoverGross>0
+
 gen ZeroTurnover=0
 replace ZeroTurnover=1 if TurnoverGross==0
 
@@ -210,26 +213,566 @@ replace TurnoverGross=TurnoverGross/100000
 
 egen bin1=cut(TurnoverGross), at(0(1)2000)
 
-replace TurnoverGross=TurnoverGross*10
-egen bin2=cut(TurnoverGross), at(0(1)2000)
 
 bys TaxYear bin1: gen Count=_N
 by TaxYear bin1: gen SerialCount=_n
 by TaxYear bin1: gen VatRatio=MoneyDeposited/TurnoverGross
 by TaxYear bin1: egen PC=mean(PositiveContribution)
+by TaxYear bin1: egen MeanMoneyDeposited=mean(MoneyDeposited)
 
-keep if SerialCount==1
+*keep if SerialCount==1
 
-twoway (connected Count bin1 if TaxYear==1&bin1<600, sort) (fpfit Count bin1 if TaxYear==1&bin1<60&(bin1<9|bin1>11)), xline(10)
+
+//Bunching at 50 Million
+{
+#delimit ;
+twoway (connected Count bin1 if TaxYear==1&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit Count bin1 if TaxYear==1&bin1>400&bin1<600&(bin1<495|bin1>505)&SerialCount==1, estopts(degree(4))), 
+	   xline(500) title("Bunching in Year 1 at 50 Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in .1 million rupees)")
+	   note("Dropping mass between 49.5 and 50.5 million. 4th Degree polynomial");
+graph save Graph "F:\Bunching_analysis\BunchingYear1_50Million_Degree4.gph";
+graph export "F:\Bunching_analysis\BunchingYear1_50Million_Degree4.pdf", as(pdf) replace;
+
 
 #delimit ;
-twoway (connected Count bin1 if TaxYear==1&bin1>400&bin1<600, sort) 
-       (fpfit Count bin1 if TaxYear==1&bin1>400&bin1<600&(bin1<495|bin1>505), estopts(degree(4)))
-	   (connected Count bin1 if TaxYear==4&bin1>400&bin1<600, sort) 
-	   (fpfit Count bin1 if TaxYear==4&bin1>400&bin1<600&(bin1<495|bin1>505), estopts(degree(4)))
+twoway (connected PC bin1 if TaxYear==1&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit PC bin1 if TaxYear==1&bin1>400&bin1<600&(bin1<495|bin1>505)&SerialCount==1, estopts(degree(4))), 
+	   xline(500) title("Proportion of Firms making a Positive Contribution ") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in .1 million rupees)")
+	   note("Dropping mass between 49.5 and 50.5 million. 4th Degree polynomial");
+	   graph save Graph "F:\Bunching_analysis\BunchingYear1_50Million_Degree4_PositiveC.gph";
+graph export "F:\Bunching_analysis\BunchingYear1_50Million_Degree4_PositiveC.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected MeanMoneyDeposited bin1 if TaxYear==1&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit MeanMoneyDeposited bin1 if TaxYear==1&bin1>400&bin1<600&(bin1<495|bin1>505)&SerialCount==1, estopts(degree(4))), 
+	   xline(500) title("Mean Tax Remitted") 
+	   graphregion(color(white)) 
+	   xtitle("Tax collection (in .1 million rupees)")
+	   note("Dropping mass between 49.5 and 50.5 million. 4th Degree polynomial");
+	   	   graph save Graph "F:\Bunching_analysis\BunchingYear1_50Million_Degree4_MeanTax.gph";
+graph export "F:\Bunching_analysis\BunchingYear1_50Million_Degree4_MeanTax.pdf", as(pdf) replace;
+
+
+	   
+
+#delimit ;
+twoway (connected Count bin1 if TaxYear==2&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit Count bin1 if TaxYear==2&bin1>400&bin1<600&(bin1<495|bin1>505)&SerialCount==1, estopts(degree(4))), 
+	   xline(500) title("Bunching in Year 2 at 50 Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in .1 million rupees)")
+	   note("Dropping mass between 49.5 and 50.5 million. 4th Degree polynomial");
+graph save Graph "F:\Bunching_analysis\BunchingYear2_50Million_Degree4.gph";
+graph export "F:\Bunching_analysis\BunchingYear2_50Million_Degree4.pdf", as(pdf) replace;
+
+
+
+#delimit ;
+twoway (connected PC bin1 if TaxYear==2&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit PC bin1 if TaxYear==2&bin1>400&bin1<600&(bin1<495|bin1>505)&SerialCount==1, estopts(degree(4))), 
+	   xline(500) title("Proportion of Firms making a Positive Contribution ") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in .1 million rupees)")
+	   note("Dropping mass between 49.5 and 50.5 million. 4th Degree polynomial");
+	   graph save Graph "F:\Bunching_analysis\BunchingYear2_50Million_Degree4_PositiveC.gph";
+graph export "F:\Bunching_analysis\BunchingYear2_50Million_Degree4_PositiveC.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected MeanMoneyDeposited bin1 if TaxYear==2&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit MeanMoneyDeposited bin1 if TaxYear==2&bin1>400&bin1<600&(bin1<495|bin1>505)&SerialCount==1, estopts(degree(4))), 
+	   xline(500) title("Mean Tax Remitted") 
+	   graphregion(color(white)) 
+	   xtitle("Tax collection (in .1 million rupees)")
+	   note("Dropping mass between 49.5 and 50.5 million. 4th Degree polynomial");
+	   	   graph save Graph "F:\Bunching_analysis\BunchingYear2_50Million_Degree4_MeanTax.gph";
+graph export "F:\Bunching_analysis\BunchingYear2_50Million_Degree4_MeanTax.pdf", as(pdf) replace;
+
+#delimit ;
+twoway (connected Count bin1 if TaxYear==3&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit Count bin1 if TaxYear==3&bin1>400&bin1<600&(bin1<495|bin1>505)&SerialCount==1, estopts(degree(4))), 
+	   xline(500) title("Bunching in Year 3 at 50 Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in .1 million rupees)")
+	   note("Dropping mass between 49.5 and 50.5 million. 4th Degree polynomial");
+graph save Graph "F:\Bunching_analysis\BunchingYear3_50Million_Degree4.gph";
+graph export "F:\Bunching_analysis\BunchingYear3_50Million_Degree4.pdf", as(pdf) replace;
+	   
+	   
+
+#delimit ;
+twoway (connected PC bin1 if TaxYear==3&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit PC bin1 if TaxYear==3&bin1>400&bin1<600&(bin1<495|bin1>505)&SerialCount==1, estopts(degree(4))), 
+	   xline(500) title("Proportion of Firms making a Positive Contribution ") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in .1 million rupees)")
+	   note("Dropping mass between 49.5 and 50.5 million. 4th Degree polynomial");
+	   graph save Graph "F:\Bunching_analysis\BunchingYear3_50Million_Degree4_PositiveC.gph";
+graph export "F:\Bunching_analysis\BunchingYear3_50Million_Degree4_PositiveC.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected MeanMoneyDeposited bin1 if TaxYear==3&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit MeanMoneyDeposited bin1 if TaxYear==3&bin1>400&bin1<600&(bin1<495|bin1>505)&SerialCount==1, estopts(degree(4))), 
+	   xline(500) title("Mean Tax Remitted") 
+	   graphregion(color(white)) 
+	   xtitle("Tax collection (in .1 million rupees)")
+	   note("Dropping mass between 49.5 and 50.5 million. 4th Degree polynomial");
+	   	   graph save Graph "F:\Bunching_analysis\BunchingYear3_50Million_Degree4_MeanTax.gph";
+graph export "F:\Bunching_analysis\BunchingYear3_50Million_Degree4_MeanTax.pdf", as(pdf) replace;
+	   
+	   
+#delimit ;
+twoway (connected Count bin1 if TaxYear==4&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit Count bin1 if TaxYear==4&bin1>400&bin1<600&(bin1<495|bin1>505)&SerialCount==1, estopts(degree(4))), 
+	   xline(500) title("Bunching in Year 4 at 50 Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in .1 million rupees)")
+	   note("Dropping mass between 49.5 and 50.5 million. 4th Degree polynomial");
+graph save Graph "F:\Bunching_analysis\BunchingYear4_50Million_Degree4.gph";
+graph export "F:\Bunching_analysis\BunchingYear4_50Million_Degree4.pdf", as(pdf) replace;
+
+
+
+#delimit ;
+twoway (connected PC bin1 if TaxYear==4&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit PC bin1 if TaxYear==4&bin1>400&bin1<600&(bin1<495|bin1>505)&SerialCount==1, estopts(degree(4))), 
+	   xline(500) title("Proportion of Firms making a Positive Contribution ") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in .1 million rupees)")
+	   note("Dropping mass between 49.5 and 50.5 million. 4th Degree polynomial");
+	   graph save Graph "F:\Bunching_analysis\BunchingYear4_50Million_Degree4_PositiveC.gph";
+graph export "F:\Bunching_analysis\BunchingYear4_50Million_Degree4_PositiveC.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected MeanMoneyDeposited bin1 if TaxYear==4&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit MeanMoneyDeposited bin1 if TaxYear==4&bin1>400&bin1<600&(bin1<495|bin1>505)&SerialCount==1, estopts(degree(4))), 
+	   xline(500) title("Mean Tax Remitted") 
+	   graphregion(color(white)) 
+	   xtitle("Tax collection (in .1 million rupees)")
+	   note("Dropping mass between 49.5 and 50.5 million. 4th Degree polynomial");
+	   	   graph save Graph "F:\Bunching_analysis\BunchingYear4_50Million_Degree4_MeanTax.gph";
+graph export "F:\Bunching_analysis\BunchingYear4_50Million_Degree4_MeanTax.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected Count bin1 if TaxYear==5&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit Count bin1 if TaxYear==5&bin1>400&bin1<600&(bin1<495|bin1>505)&SerialCount==1, estopts(degree(4))), 
+	   xline(500) title("Bunching in Year 5 at 50 Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in .1 million rupees)")
+	   note("Dropping mass between 49.5 and 50.5 million. 4th Degree polynomial");
+graph save Graph "F:\Bunching_analysis\BunchingYear5_50Million_Degree4.gph";
+graph export "F:\Bunching_analysis\BunchingYear5_50Million_Degree4.pdf", as(pdf) replace;	   
+
+
+#delimit ;
+twoway (connected PC bin1 if TaxYear==5&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit PC bin1 if TaxYear==5&bin1>400&bin1<600&(bin1<495|bin1>505)&SerialCount==1, estopts(degree(4))), 
+	   xline(500) title("Proportion of Firms making a Positive Contribution ") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in .1 million rupees)")
+	   note("Dropping mass between 49.5 and 50.5 million. 4th Degree polynomial");
+	   graph save Graph "F:\Bunching_analysis\BunchingYear5_50Million_Degree4_PositiveC.gph";
+graph export "F:\Bunching_analysis\BunchingYear5_50Million_Degree4_PositiveC.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected MeanMoneyDeposited bin1 if TaxYear==5&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit MeanMoneyDeposited bin1 if TaxYear==5&bin1>400&bin1<600&(bin1<495|bin1>505)&SerialCount==1, estopts(degree(4))), 
+	   xline(500) title("Mean Tax Remitted") 
+	   graphregion(color(white)) 
+	   xtitle("Tax collection (in .1 million rupees)")
+	   note("Dropping mass between 49.5 and 50.5 million. 4th Degree polynomial");
+	   	   graph save Graph "F:\Bunching_analysis\BunchingYear5_50Million_Degree4_MeanTax.gph";
+graph export "F:\Bunching_analysis\BunchingYear5_50Million_Degree4_MeanTax.pdf", as(pdf) replace;
+
+
+
+}	   
+
+
+	   
+//Bunching at 5 million
+{
+egen bin2=cut(TurnoverGross), at(0(.1)200)
+
+
+bys TaxYear bin2: gen Count2=_N
+by TaxYear bin2: gen SerialCount2=_n
+by TaxYear bin2: gen VatRatio2=MoneyDeposited/TurnoverGross
+by TaxYear bin2: egen PC2=mean(PositiveContribution)
+by TaxYear bin2: egen MeanMoneyDeposited2=mean(MoneyDeposited)
+
+
+#delimit ;
+twoway (connected Count2 bin2 if TaxYear==1&bin2>45&bin2<55&SerialCount2==1, sort) 
+       (fpfit Count2 bin2 if TaxYear==1&bin2>45&bin2<55&(bin2<49.5|bin2>50.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(50) title("Bunching in Year 1 at 5 Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in 10,000 rupees)")
+	   note("Dropping mass between 4.95 and 5.05 million. 4th Degree polynomial. Unexplained mass at 4.55");
+graph save Graph "F:\Bunching_analysis\BunchingYear1_5Million_Degree4.gph";
+graph export "F:\Bunching_analysis\BunchingYear1_5Million_Degree4.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected PC2 bin2 if TaxYear==1&bin2>45&bin2<55&SerialCount2==1, sort) 
+       (fpfit PC2 bin2 if TaxYear==1&bin1>45&bin1<55&(bin1<49.5|bin2>50.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(50) title("Proportion of Firms making a Positive Contribution (Year1)") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 10,000 rupees)")
+	   note("Dropping mass between 4.95 and 5.05 million. 4th Degree polynomial. Unexplained mass at 4.55");
+	   graph save Graph "F:\Bunching_analysis\BunchingYear1_5Million_Degree4_PositiveC.gph";
+graph export "F:\Bunching_analysis\BunchingYear1_5Million_Degree4_PositiveC.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected MeanMoneyDeposited2 bin2 if TaxYear==1&bin2>45&bin2<55&SerialCount2==1, sort) 
+       (fpfit MeanMoneyDeposited2 bin2 if TaxYear==1&bin2>45&bin2<55&(bin2<49.5|bin2>50.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(50) title("Mean Tax Remitted (Year 1)") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 10,000 rupees)")
+	   note("Dropping mass between 4.95 and 5.05 million. 4th Degree polynomial. Unexplained mass at 4.55");
+	   	   graph save Graph "F:\Bunching_analysis\BunchingYear1_5Million_Degree4_MeanTax.gph";
+graph export "F:\Bunching_analysis\BunchingYear1_5Million_Degree4_MeanTax.pdf", as(pdf) replace;
+
+
+
+#delimit ;
+twoway (connected Count2 bin2 if TaxYear==2&bin2>45&bin2<55&SerialCount2==1, sort) 
+       (fpfit Count2 bin2 if TaxYear==2&bin2>45&bin2<55&(bin2<49.5|bin2>50.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(50) title("Bunching in Year 2 at 5 Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in 10,000 rupees)")
+	   note("Dropping mass between 4.95 and 5.05 million. 4th Degree polynomial. Unexplained mass at 4.55");
+graph save Graph "F:\Bunching_analysis\BunchingYear2_5Million_Degree4.gph";
+graph export "F:\Bunching_analysis\BunchingYear2_5Million_Degree4.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected PC2 bin2 if TaxYear==2&bin2>45&bin2<55&SerialCount2==1, sort) 
+       (fpfit PC2 bin2 if TaxYear==2&bin1>45&bin1<55&(bin1<49.5|bin2>50.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(50) title("Proportion of Firms making a Positive Contribution (Year 2) ") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 10,000 rupees)")
+	   note("Dropping mass between 4.95 and 5.05 million. 4th Degree polynomial. Unexplained mass at 4.55");
+	   graph save Graph "F:\Bunching_analysis\BunchingYear2_5Million_Degree4_PositiveC.gph";
+graph export "F:\Bunching_analysis\BunchingYear2_5Million_Degree4_PositiveC.pdf", as(pdf);
+
+
+#delimit ;
+twoway (connected MeanMoneyDeposited2 bin2 if TaxYear==1&bin2>45&bin2<55&SerialCount2==1, sort) 
+       (fpfit MeanMoneyDeposited2 bin2 if TaxYear==1&bin2>45&bin2<55&(bin2<49.5|bin2>50.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(50) title("Mean Tax Remitted (Year 2)") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 10,000 rupees)")
+	   note("Dropping mass between 4.95 and 5.05 million. 4th Degree polynomial. Unexplained mass at 4.55");
+	   	   graph save Graph "F:\Bunching_analysis\BunchingYear2_5Million_Degree4_MeanTax.gph";
+graph export "F:\Bunching_analysis\BunchingYear2_5Million_Degree4_MeanTax.pdf", as(pdf);
+
+
+
+#delimit ;
+twoway (connected Count2 bin2 if TaxYear==3&bin2>45&bin2<55&SerialCount2==1, sort) 
+       (fpfit Count2 bin2 if TaxYear==3&bin2>45&bin2<55&(bin2<49.5|bin2>50.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(50) title("Bunching in Year 3 at 5 Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in 10,000 rupees)")
+	   note("Dropping mass between 4.95 and 5.05 million. 4th Degree polynomial. Unexplained mass at 4.55");
+graph save Graph "F:\Bunching_analysis\BunchingYear3_5Million_Degree4.gph";
+graph export "F:\Bunching_analysis\BunchingYear3_5Million_Degree4.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected PC2 bin2 if TaxYear==3&bin2>45&bin2<55&SerialCount2==1, sort) 
+       (fpfit PC2 bin2 if TaxYear==3&bin1>45&bin1<55&(bin1<49.5|bin2>50.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(50) title("Proportion of Firms making a Positive Contribution (Year 3) ") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 10,000 rupees)")
+	   note("Dropping mass between 4.95 and 5.05 million. 4th Degree polynomial. Unexplained mass at 4.55");
+	   graph save Graph "F:\Bunching_analysis\BunchingYear3_5Million_Degree4_PositiveC.gph";
+graph export "F:\Bunching_analysis\BunchingYear3_5Million_Degree4_PositiveC.pdf", as(pdf);
+
+
+#delimit ;
+twoway (connected MeanMoneyDeposited2 bin2 if TaxYear==3&bin2>45&bin2<55&SerialCount2==1, sort) 
+       (fpfit MeanMoneyDeposited2 bin2 if TaxYear==3&bin2>45&bin2<55&(bin2<49.5|bin2>50.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(50) title("Mean Tax Remitted (Year 3)") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 10,000 rupees)")
+	   note("Dropping mass between 4.95 and 5.05 million. 4th Degree polynomial. Unexplained mass at 4.55");
+	   	   graph save Graph "F:\Bunching_analysis\BunchingYear3_5Million_Degree4_MeanTax.gph";
+graph export "F:\Bunching_analysis\BunchingYear3_5Million_Degree4_MeanTax.pdf", as(pdf);
+
+
+#delimit ;
+twoway (connected Count2 bin2 if TaxYear==4&bin2>45&bin2<55&SerialCount2==1, sort) 
+       (fpfit Count2 bin2 if TaxYear==4&bin2>45&bin2<55&(bin2<49.5|bin2>50.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(50) title("Bunching in Year 4 at 5 Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in 10,000 rupees)")
+	   note("Dropping mass between 4.95 and 5.05 million. 4th Degree polynomial. Unexplained mass at 4.55");
+graph save Graph "F:\Bunching_analysis\BunchingYear4_5Million_Degree4.gph";
+graph export "F:\Bunching_analysis\BunchingYear4_5Million_Degree4.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected PC2 bin2 if TaxYear==4&bin2>45&bin2<55&SerialCount2==1, sort) 
+       (fpfit PC2 bin2 if TaxYear==4&bin1>45&bin1<55&(bin1<49.5|bin2>50.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(50) title("Proportion of Firms making a Positive Contribution (Year 4) ") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 10,000 rupees)")
+	   note("Dropping mass between 4.95 and 5.05 million. 4th Degree polynomial. Unexplained mass at 4.55");
+	   graph save Graph "F:\Bunching_analysis\BunchingYear4_5Million_Degree4_PositiveC.gph";
+graph export "F:\Bunching_analysis\BunchingYear4_5Million_Degree4_PositiveC.pdf", as(pdf);
+
+
+#delimit ;
+twoway (connected MeanMoneyDeposited2 bin2 if TaxYear==4&bin2>45&bin2<55&SerialCount2==1, sort) 
+       (fpfit MeanMoneyDeposited2 bin2 if TaxYear==4&bin2>45&bin2<55&(bin2<49.5|bin2>50.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(50) title("Mean Tax Remitted (Year 4)") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 10,000 rupees)")
+	   note("Dropping mass between 4.95 and 5.05 million. 4th Degree polynomial. Unexplained mass at 4.55");
+	   	   graph save Graph "F:\Bunching_analysis\BunchingYear4_5Million_Degree4_MeanTax.gph";
+graph export "F:\Bunching_analysis\BunchingYear4_5Million_Degree4_MeanTax.pdf", as(pdf);
+
+
+#delimit ;
+twoway (connected Count2 bin2 if TaxYear==5&bin2>45&bin2<55&SerialCount2==1, sort) 
+       (fpfit Count2 bin2 if TaxYear==5&bin2>45&bin2<55&(bin2<49.5|bin2>50.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(50) title("Bunching in Year 5 at 5 Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in 10,000 rupees)")
+	   note("Dropping mass between 4.95 and 5.05 million. 4th Degree polynomial. Unexplained mass at 4.55");
+graph save Graph "F:\Bunching_analysis\BunchingYear5_5Million_Degree4.gph";
+graph export "F:\Bunching_analysis\BunchingYear5_5Million_Degree4.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected PC2 bin2 if TaxYear==3&bin2>45&bin2<55&SerialCount2==1, sort) 
+       (fpfit PC2 bin2 if TaxYear==3&bin1>45&bin1<55&(bin1<49.5|bin2>50.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(50) title("Proportion of Firms making a Positive Contribution (Year 5) ") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 10,000 rupees)")
+	   note("Dropping mass between 4.95 and 5.05 million. 4th Degree polynomial. Unexplained mass at 4.55");
+	   graph save Graph "F:\Bunching_analysis\BunchingYear5_5Million_Degree4_PositiveC.gph";
+graph export "F:\Bunching_analysis\BunchingYear5_5Million_Degree4_PositiveC.pdf", as(pdf);
+
+
+#delimit ;
+twoway (connected MeanMoneyDeposited2 bin2 if TaxYear==3&bin2>45&bin2<55&SerialCount2==1, sort) 
+       (fpfit MeanMoneyDeposited2 bin2 if TaxYear==3&bin2>45&bin2<55&(bin2<49.5|bin2>50.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(50) title("Mean Tax Remitted (Year 5)") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 10,000 rupees)")
+	   note("Dropping mass between 4.95 and 5.05 million. 4th Degree polynomial. Unexplained mass at 4.55");
+	   	   graph save Graph "F:\Bunching_analysis\BunchingYear5_5Million_Degree4_MeanTax.gph";
+graph export "F:\Bunching_analysis\BunchingYear5_5Million_Degree4_MeanTax.pdf", as(pdf);
+  
+}   
+
+* Bunching at 1 million
+
+{
+#delimit ;
+twoway (connected Count2 bin2 if TaxYear==1&bin2>5&bin2<15&SerialCount2==1, sort) 
+       (fpfit Count2 bin2 if TaxYear==1&bin2>5&bin2<15&(bin2<9.5|bin2>10.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(10) title("Bunching in Year 1 at 1 Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in 100,000 rupees)")
+	   note("Dropping mass between 0.95 and 1.05 million. 4th Degree polynomial. Unexplained mass at 1.55");
+graph save Graph "F:\Bunching_analysis\BunchingYear1_1Million_Degree4.gph";
+graph export "F:\Bunching_analysis\BunchingYear1_1Million_Degree4.pdf", as(pdf) replace;
+
+
+
+
+#delimit ;
+twoway (connected PC2 bin2 if TaxYear==1&bin2>5&bin2<15&SerialCount2==1, sort) 
+       (fpfit PC2 bin2 if TaxYear==1&bin2>5&bin2<15&(bin2<9.5|bin2>10.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(10) title("Proportion of Firms making a Positive Contribution (Year1)") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 100,000 rupees)")
+	   note("Dropping mass between 0.95 and 1.05 million. 4th Degree polynomial. Unexplained mass at 1.55");
+	   graph save Graph "F:\Bunching_analysis\BunchingYear1_1Million_Degree4_PositiveC.gph";
+graph export "F:\Bunching_analysis\BunchingYear1_1Million_Degree4_PositiveC.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected MeanMoneyDeposited2 bin2 if TaxYear==1&bin2>5&bin2<15&SerialCount2==1, sort) 
+       (fpfit MeanMoneyDeposited2 bin2 if TaxYear==1&bin2>5&bin2<15&(bin2<9.5|bin2>10.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(10) title("Mean Tax Remitted (Year 1)") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 100,000 rupees)")
+	   note("Dropping mass between 0.95 and 1.05 million. 4th Degree polynomial. Unexplained mass at 1.55");
+	   	   graph save Graph "F:\Bunching_analysis\BunchingYear1_1Million_Degree4_MeanTax.gph";
+graph export "F:\Bunching_analysis\BunchingYear1_1Million_Degree4_MeanTax.pdf", as(pdf) replace;
+
+
+
+#delimit ;
+twoway (connected Count2 bin2 if TaxYear==2&bin2>5&bin2<15&SerialCount2==1, sort) 
+       (fpfit Count2 bin2 if TaxYear==2&bin2>5&bin2<15&(bin2<9.5|bin2>10.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(10) title("Bunching in Year 2 at 1 Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in 100,000 rupees)")
+	   note("Dropping mass between 0.95 and 1.05 million. 4th Degree polynomial. Unexplained mass at 1.55");
+graph save Graph "F:\Bunching_analysis\BunchingYear2_1Million_Degree4.gph";
+graph export "F:\Bunching_analysis\BunchingYear2_1Million_Degree4.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected PC2 bin2 if TaxYear==2&bin2>5&bin2<15&SerialCount2==1, sort) 
+       (fpfit PC2 bin2 if TaxYear==2&bin2>5&bin2<15&(bin2<9.5|bin2>10.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(10) title("Proportion of Firms making a Positive Contribution (Year 2) ") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 100,000 rupees)")
+	   note("Dropping mass between 0.95 and 1.05 million. 4th Degree polynomial. Unexplained mass at 1.55");
+	   graph save Graph "F:\Bunching_analysis\BunchingYear2_1Million_Degree4_PositiveC.gph";
+graph export "F:\Bunching_analysis\BunchingYear2_1Million_Degree4_PositiveC.pdf", as(pdf);
+
+
+#delimit ;
+twoway (connected MeanMoneyDeposited2 bin2 if TaxYear==2&bin2>5&bin2<15&SerialCount2==1, sort) 
+       (fpfit MeanMoneyDeposited2 bin2 if TaxYear==2&bin2>5&bin2<15&(bin2<9.5|bin2>10.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(10) title("Mean Tax Remitted (Year 2)") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 100,000 rupees)")
+	   note("Dropping mass between 0.95 and 1.05 million. 4th Degree polynomial. Unexplained mass at 1.55");
+	   	   graph save Graph "F:\Bunching_analysis\BunchingYear2_1Million_Degree4_MeanTax.gph";
+graph export "F:\Bunching_analysis\BunchingYear2_1Million_Degree4_MeanTax.pdf", as(pdf);
+
+
+
+#delimit ;
+twoway (connected Count2 bin2 if TaxYear==3&bin2>5&bin2<15&SerialCount2==1, sort) 
+       (fpfit Count2 bin2 if TaxYear==3&bin2>5&bin2<15&(bin2<9.5|bin2>10.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(10) title("Bunching in Year 3 at 1 Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in 100,000 rupees)")
+	   note("Dropping mass between 0.95 and 1.05 million. 4th Degree polynomial. Unexplained mass at 1.55");
+graph save Graph "F:\Bunching_analysis\BunchingYear3_1Million_Degree4.gph";
+graph export "F:\Bunching_analysis\BunchingYear3_1Million_Degree4.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected PC2 bin2 if TaxYear==3&bin2>5&bin2<15&SerialCount2==1, sort) 
+       (fpfit PC2 bin2 if TaxYear==3&bin2>5&bin2<15&(bin2<9.5|bin2>10.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(10) title("Proportion of Firms making a Positive Contribution (Year 3) ") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 100,000 rupees)")
+	   note("Dropping mass between 0.95 and 1.05 million. 4th Degree polynomial. Unexplained mass at 1.55");
+	   graph save Graph "F:\Bunching_analysis\BunchingYear3_1Million_Degree4_PositiveC.gph";
+graph export "F:\Bunching_analysis\BunchingYear3_1Million_Degree4_PositiveC.pdf", as(pdf);
+
+
+#delimit ;
+twoway (connected MeanMoneyDeposited2 bin2 if TaxYear==3&bin2>5&bin2<15&SerialCount2==1, sort) 
+       (fpfit MeanMoneyDeposited2 bin2 if TaxYear==3&bin2>5&bin2<15&(bin2<9.5|bin2>10.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(10) title("Mean Tax Remitted (Year 3)") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 100,000 rupees)")
+	   note("Dropping mass between 0.95 and 1.05 million. 4th Degree polynomial. Unexplained mass at 1.55");
+	   	   graph save Graph "F:\Bunching_analysis\BunchingYear3_1Million_Degree4_MeanTax.gph";
+graph export "F:\Bunching_analysis\BunchingYear3_1Million_Degree4_MeanTax.pdf", as(pdf);
+
+
+#delimit ;
+twoway (connected Count2 bin2 if TaxYear==4&bin2>5&bin2<15&SerialCount2==1, sort) 
+       (fpfit Count2 bin2 if TaxYear==4&bin2>5&bin2<15&(bin2<9.5|bin2>10.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(10) title("Bunching in Year 4 at 1 Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in 100,000 rupees)")
+	   note("Dropping mass between 0.95 and 1.05 million. 4th Degree polynomial. Unexplained mass at 1.55");
+graph save Graph "F:\Bunching_analysis\BunchingYear4_1Million_Degree4.gph";
+graph export "F:\Bunching_analysis\BunchingYear4_1Million_Degree4.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected PC2 bin2 if TaxYear==4&bin2>5&bin2<15&SerialCount2==1, sort) 
+       (fpfit PC2 bin2 if TaxYear==4&bin2>5&bin2<15&(bin2<9.5|bin2>10.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(10) title("Proportion of Firms making a Positive Contribution (Year 4) ") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 100,000 rupees)")
+	   note("Dropping mass between 0.95 and 1.05 million. 4th Degree polynomial. Unexplained mass at 1.55");
+	   graph save Graph "F:\Bunching_analysis\BunchingYear4_1Million_Degree4_PositiveC.gph";
+graph export "F:\Bunching_analysis\BunchingYear4_1Million_Degree4_PositiveC.pdf", as(pdf);
+
+
+#delimit ;
+twoway (connected MeanMoneyDeposited2 bin2 if TaxYear==4&bin2>5&bin2<15&SerialCount2==1, sort) 
+       (fpfit MeanMoneyDeposited2 bin2 if TaxYear==4&bin2>5&bin2<15&(bin2<9.5|bin2>10.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(10) title("Mean Tax Remitted (Year 4)") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 100,000 rupees)")
+	   note("Dropping mass between 0.95 and 1.05 million. 4th Degree polynomial. Unexplained mass at 1.55");
+	   	   graph save Graph "F:\Bunching_analysis\BunchingYear4_1Million_Degree4_MeanTax.gph";
+graph export "F:\Bunching_analysis\BunchingYear4_1Million_Degree4_MeanTax.pdf", as(pdf);
+
+
+#delimit ;
+twoway (connected Count2 bin2 if TaxYear==5&bin2>5&bin2<15&SerialCount2==1, sort) 
+       (fpfit Count2 bin2 if TaxYear==5&bin2>5&bin2<15&(bin2<9.5|bin2>10.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(10) title("Bunching in Year 5 at 5 Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in 100,000 rupees)")
+	   note("Dropping mass between 0.95 and 1.05 million. 4th Degree polynomial.");
+graph save Graph "F:\Bunching_analysis\BunchingYear5_1Million_Degree4.gph";
+graph export "F:\Bunching_analysis\BunchingYear5_1Million_Degree4.pdf", as(pdf) replace;
+
+
+#delimit ;
+twoway (connected PC2 bin2 if TaxYear==5&bin2>5&bin2<15&SerialCount2==1, sort) 
+       (fpfit PC2 bin2 if TaxYear==5&bin2>5&bin2<15&(bin2<9.5|bin2>10.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(10) title("Proportion of Firms making a Positive Contribution (Year 5) ") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 100,000 rupees)")
+	   note("Dropping mass between 0.95 and 1.05 million. 4th Degree polynomial.");
+	   graph save Graph "F:\Bunching_analysis\BunchingYear5_1Million_Degree4_PositiveC.gph";
+graph export "F:\Bunching_analysis\BunchingYear5_1Million_Degree4_PositiveC.pdf", as(pdf);
+
+
+#delimit ;
+twoway (connected MeanMoneyDeposited2 bin2 if TaxYear==5&bin2>5&bin2<15&SerialCount2==1, sort) 
+       (fpfit MeanMoneyDeposited2 bin2 if TaxYear==5&bin2>5&bin2<15&(bin2<9.5|bin2>10.5)&SerialCount2==1, estopts(degree(4))), 
+	   xline(10) title("Mean Tax Remitted (Year 5)") 
+	   graphregion(color(white)) 
+       xtitle("Revenue (in 100,000 rupees)")
+	   note("Dropping mass between 0.95 and 1.05 million. 4th Degree polynomial. Unexplained mass at 1.55");
+	   	   graph save Graph "F:\Bunching_analysis\BunchingYear5_1Million_Degree4_MeanTax.gph";
+graph export "F:\Bunching_analysis\BunchingYear5_1Million_Degree4_MeanTax.pdf", as(pdf);
+  
+
+}
+
+	   
+	   #delimit ;
+twoway (connected Count bin1 if TaxYear==3&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit Count bin1 if TaxYear==3&bin1>400&bin1<600&(bin1<495|bin1>505&SerialCount==1), estopts(degree(4)))
 	   , xline(500);
 
+	   #delimit ;
+twoway (connected Count bin1 if TaxYear==4&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit Count bin1 if TaxYear==4&bin1>400&bin1<600&(bin1<495|bin1>505&SerialCount==1), estopts(degree(4)))
+	   , xline(500);
+	   
+	   
+	   #delimit ;
+twoway (connected Count bin1 if TaxYear==5&bin1>400&bin1<600&SerialCount==1, sort) 
+       (fpfit Count bin1 if TaxYear==5&bin1>400&bin1<600&(bin1<495|bin1>505&SerialCount==1), estopts(degree(4)))
+	   , xline(500);
 
+	   
+	   * (connected Count bin1 if TaxYear==4&bin1>400&bin1<600, sort) 
+*	   (fpfit Count bin1 if TaxYear==4&bin1>400&bin1<600&(bin1<495|bin1>505), estopts(degree(4)))
 	   
 #delimit ;
 twoway (connected Count bin1 if TaxYear==1&bin1<60, sort) 
