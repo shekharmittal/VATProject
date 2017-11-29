@@ -1,3 +1,13 @@
+/* Date: November 28, 2017 */
+/* Author: Shekhar Mittal */
+/* In this file, we focus on plotting the graphs for bunching visualisation */
+/* We are going to focus on 3 thresholds */
+/* 1. 50 million */
+/* 2. 5 million  */
+/* 3. 1 million */
+/* We are going to do this over 3 bin sizes */
+
+
 cd "E:\data"
 
 //use "PreliminaryAnalysis\returns\form16_data_v3_0901.dta", clear
@@ -265,19 +275,17 @@ graph export "F:\Bunching_analysis\BunchingYear1_50Million_Degree4_2lac.pdf", as
 
 
 
-
 #delimit ;
 twoway (connected Count3 bin3 if TaxYear==1&bin3>400&bin3<600&SerialCount3==1, sort) 
-       (fpfit Count3 bin3 if TaxYear==1&bin3>400&bin3<600&(bin3<490|bin3>530)&SerialCount3==1, estopts(degree(4))), 
-	   xline(500) xline(490, lpattern(dash) lcolor(maroon)) xline(530, lpattern(dash) lcolor(maroon))  
+       (fpfit Count3 bin3 if TaxYear==1&bin3>400&bin3<600&(bin3<488|bin3>520)&SerialCount3==1, estopts(degree(4))), 
+	   xline(500) xline(488, lpattern(dash) lcolor(maroon)) xline(520, lpattern(dash) lcolor(maroon))  
 	   title("Bunching in Year 1 at 50 Million cutoff") 
 	   graphregion(color(white)) 
 	   xtitle("Revenue (in .3 million rupees)")
-	   note("Dropping mass between 49.4 and 50.6 million. 4th Degree polynomial");
+	   note("Dropping mass between 48.8 and 52 million. 4th Degree polynomial");
 graph save Graph "F:\Bunching_analysis\BunchingYear1_50Million_Degree4_3lac.gph";
 graph export "F:\Bunching_analysis\BunchingYear1_50Million_Degree4_3lac.pdf", as(pdf) replace;
 
-	   
 	   
 #delimit ;
 twoway (connected PC bin1 if TaxYear==1&bin1>400&bin1<600&SerialCount==1, sort) 
@@ -1540,9 +1548,22 @@ graph export "C:\Users\shekh\Dropbox (Personal)\VAT in Developing Countries\Anal
 
 	
 # delimit;
-twoway (scatter TurnoverTaxYear5 TurnoverTaxYear4 if TaxYear==4&TurnoverTaxYear4<600&TurnoverTaxYear5<2000&TurnoverTaxYear4>400), 
+twoway (scatter TurnoverTaxYear5 TurnoverTaxYear4 if TaxYear==4&TurnoverTaxYear4<600&TurnoverTaxYear5<1000&TurnoverTaxYear4>400)
+ (function y=x,  range(400 600)), 
        xline(500) graphregion(color(white)) yline(500)
-	   note("if TaxYear==1&bin1>490&bin1<510&TurnoverTaxYear2<4000");
+	   xtitle("TaxYear 4") ytitle("TaxYear 5") legend(off) title("Threshold at 50 Million")
+	   note("if  TaxYear==4&TurnoverTaxYear4<600&TurnoverTaxYear5<1000&TurnoverTaxYear4>400");
+//graph save Graph "F:\Bunching_analysis\BunchingYear5_1Million_Degree4_30000.gph";
+//graph export "F:\Bunching_analysis\BunchingYear5_1Million_Degree4_30000.pdf", as(pdf) replace;
+
+
+# delimit;
+twoway (scatter TurnoverTaxYear4 TurnoverTaxYear3 if TaxYear==3&TurnoverTaxYear3<600&TurnoverTaxYear4<1000&TurnoverTaxYear3>400)
+ (function y=x,  range(400 600)), 
+       xline(500) graphregion(color(white)) yline(500)
+	   xtitle("TaxYear 4") ytitle("TaxYear 4") legend(off) title("Threshold at 50 Million")
+	   note("if  TaxYear==3&TurnoverTaxYear4<600&TurnoverTaxYear5<1000&TurnoverTaxYear4>400");
+
 	
 	
 # delimit;
