@@ -249,14 +249,14 @@ by TaxYear bin3: egen MeanMoneyDeposited3=mean(MoneyDeposited)
 # delimit ;
 preserve;
 keep if SerialCount3==1;
-keep if TaxYear==5;
+keep if TaxYear==3;
 
 rename bin3 Bin3_1;
 gen Bin3_2=Bin3_1^2;
 gen Bin3_3=Bin3_1^3;
 gen Bin3_4=Bin3_1^4;
 
-reg Count3 Bin3_1 Bin3_2 Bin3_3 Bin3_4 if Bin3_1>400&Bin3_1<600&(Bin3_1<488|Bin3_1>520);
+reg Count3 Bin3_1 Bin3_2 Bin3_3 Bin3_4 if Bin3_1>400&Bin3_1<600&(Bin3_1<475|Bin3_1>540);
 predict counterfactual;
 
 local constant = _b[_cons]; // This saves the coefficients of the polynomial
@@ -270,13 +270,13 @@ forvalues i =1(1)4	{;
 
 local constant = _b[_cons]; // This saves the coefficients of the polynomial
 display `constant';
-replace counterfactual=Bin3_hat_1+Bin3_hat_2+Bin3_hat_3+Bin3_hat_4+`constant' if Bin3_1>488&Bin3_1<520;
+replace counterfactual=Bin3_hat_1+Bin3_hat_2+Bin3_hat_3+Bin3_hat_4+`constant' if Bin3_1>475&Bin3_1<=540;
 
 gen extra_density = Count3 - counterfactual;
 
 gen below_threshold=.;
-replace below_threshold=1 if Bin3_1<500&Bin3_1>=488;
-replace below_threshold=0 if Bin3_1>=500&Bin3_1<520;
+replace below_threshold=1 if Bin3_1<500&Bin3_1>=475;
+replace below_threshold=0 if Bin3_1>=500&Bin3_1<=540;
 
 egen Total_extra_density=total(extra_density), by(below_threshold);
 tab Total_extra_density below_threshold;
@@ -335,6 +335,7 @@ by TaxYear bin3: egen PC3=mean(PositiveContribution)
 by TaxYear bin3: egen MeanMoneyDeposited3=mean(MoneyDeposited)
 
 
+* for year 1 &Count3<330
 
 # delimit ;
 preserve;
@@ -346,8 +347,7 @@ gen Bin3_2=Bin3_1^2;
 gen Bin3_3=Bin3_1^3;
 gen Bin3_4=Bin3_1^4;
 
-* for year 1 &Count3<330
-reg Count3 Bin3_1 Bin3_2 Bin3_3 Bin3_4 if Bin3_1>40&Bin3_1<60&(Bin3_1<49|Bin3_1>51.5);
+reg Count3 Bin3_1 Bin3_2 Bin3_3 Bin3_4 if Bin3_1>40&Bin3_1<60&(Bin3_1<49|Bin3_1>52.5);
 predict counterfactual;
 
 local constant = _b[_cons]; // This saves the coefficients of the polynomial
@@ -361,13 +361,13 @@ forvalues i =1(1)4	{;
 
 local constant = _b[_cons]; // This saves the coefficients of the polynomial
 display `constant';
-replace counterfactual=Bin3_hat_1+Bin3_hat_2+Bin3_hat_3+Bin3_hat_4+`constant' if Bin3_1>49&Bin3_1<51.5;
+replace counterfactual=Bin3_hat_1+Bin3_hat_2+Bin3_hat_3+Bin3_hat_4+`constant' if Bin3_1>49&Bin3_1<52.5;
 
 gen extra_density = Count3 - counterfactual;
 
 gen below_threshold=.;
 replace below_threshold=1 if Bin3_1<50&Bin3_1>=49;
-replace below_threshold=0 if Bin3_1>=50&Bin3_1<51.5;
+replace below_threshold=0 if Bin3_1>=50&Bin3_1<52.5;
 
 egen Total_extra_density=total(extra_density), by(below_threshold);
 tab Total_extra_density below_threshold;
@@ -396,16 +396,16 @@ restore;
 # delimit ;
 preserve;
 keep if SerialCount3==1;
-keep if TaxYear==2;
+keep if TaxYear==5;
 
 rename bin3 Bin3_1;
 gen Bin3_2=Bin3_1^2;
 gen Bin3_3=Bin3_1^3;
 gen Bin3_4=Bin3_1^4;
 
-* for year 1 &Count3<330
+// for year 1 &Count3<330
 # delimit ;
-reg Count3 Bin3_1 Bin3_2 Bin3_3 Bin3_4 if Bin3_1>5&Bin3_1<15&(Bin3_1<9|Bin3_1>11);
+reg Count3 Bin3_1 Bin3_2 Bin3_3 Bin3_4 if Bin3_1>5&Bin3_1<15&(Bin3_1<9|Bin3_1>12.8);
 predict counterfactual;
 
 local constant = _b[_cons]; // This saves the coefficients of the polynomial
@@ -419,13 +419,14 @@ forvalues i =1(1)4	{;
 
 local constant = _b[_cons]; // This saves the coefficients of the polynomial
 display `constant';
-replace counterfactual=Bin3_hat_1+Bin3_hat_2+Bin3_hat_3+Bin3_hat_4+`constant' if Bin3_1>=9&Bin3_1<11;
+replace counterfactual=Bin3_hat_1+Bin3_hat_2+Bin3_hat_3+Bin3_hat_4+`constant' if Bin3_1>=9&Bin3_1<12.8;
 
+# delimit ;
 gen extra_density = Count3 - counterfactual;
 
 gen below_threshold=.;
 replace below_threshold=1 if Bin3_1<10&Bin3_1>=9;
-replace below_threshold=0 if Bin3_1>=10&Bin3_1<11;
+replace below_threshold=0 if Bin3_1>=10&Bin3_1<12.8;
 
 egen Total_extra_density=total(extra_density), by(below_threshold);
 tab Total_extra_density below_threshold;
@@ -445,7 +446,6 @@ local b=`B'/`h_0';
 local b = round(100*`b')/100;
 disp "Bunching estimate for 1 Million Threshold, in year 1, is `b'";
 restore; 
-
 
 
 

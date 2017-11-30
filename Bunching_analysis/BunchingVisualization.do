@@ -277,12 +277,12 @@ graph export "F:\Bunching_analysis\BunchingYear1_50Million_Degree4_2lac.pdf", as
 
 #delimit ;
 twoway (connected Count3 bin3 if TaxYear==1&bin3>400&bin3<600&SerialCount3==1, sort) 
-       (fpfit Count3 bin3 if TaxYear==1&bin3>400&bin3<600&(bin3<488|bin3>520)&SerialCount3==1, estopts(degree(4))), 
-	   xline(500) xline(488, lpattern(dash) lcolor(maroon)) xline(520, lpattern(dash) lcolor(maroon))  
+       (fpfit Count3 bin3 if TaxYear==1&bin3>400&bin3<600&(bin3<475|bin3>530)&SerialCount3==1, estopts(degree(4))), 
+	   xline(500) xline(475, lpattern(dash) lcolor(maroon)) xline(530, lpattern(dash) lcolor(maroon))  
 	   title("Bunching in Year 1 at 50 Million cutoff") 
 	   graphregion(color(white)) 
 	   xtitle("Revenue (in .3 million rupees)")
-	   note("Dropping mass between 48.8 and 52 million. 4th Degree polynomial");
+	   note("Dropping mass between 47.5 and 53 million. 4th Degree polynomial");
 graph save Graph "F:\Bunching_analysis\BunchingYear1_50Million_Degree4_3lac.gph";
 graph export "F:\Bunching_analysis\BunchingYear1_50Million_Degree4_3lac.pdf", as(pdf) replace;
 
@@ -387,12 +387,12 @@ graph export "F:\Bunching_analysis\BunchingYear2_50Million_Degree4_2lac.pdf", as
 
 #delimit ;
 twoway (connected Count3 bin3 if TaxYear==2&bin3>400&bin3<600&SerialCount3==1, sort) 
-       (fpfit Count3 bin3 if TaxYear==2&bin3>400&bin3<600&(bin3<490|bin3>530)&SerialCount3==1, estopts(degree(4))), 
-	   xline(500) xline(490, lpattern(dash) lcolor(maroon)) xline(530, lpattern(dash) lcolor(maroon))  
+       (fpfit Count3 bin3 if TaxYear==2&bin3>400&bin3<600&(bin3<480|bin3>540)&SerialCount3==1, estopts(degree(4))), 
+	   xline(500) xline(480, lpattern(dash) lcolor(maroon)) xline(540, lpattern(dash) lcolor(maroon))  
 	   title("Bunching in Year 2 at 50 Million cutoff") 
 	   graphregion(color(white)) 
 	   xtitle("Revenue (in .3 million rupees)")
-	   note("Dropping mass between 49 and 53 million. 4th Degree polynomial");
+	   note("Dropping mass between 48 and 54 million. 4th Degree polynomial");
 graph save Graph "F:\Bunching_analysis\BunchingYear2_50Million_Degree4_3lac.gph";
 graph export "F:\Bunching_analysis\BunchingYear2_50Million_Degree4_3lac.pdf", as(pdf) replace;
 
@@ -497,12 +497,12 @@ graph export "F:\Bunching_analysis\BunchingYear3_50Million_Degree4_2lac.pdf", as
 
 #delimit ;
 twoway (connected Count3 bin3 if TaxYear==3&bin3>400&bin3<600&SerialCount3==1, sort) 
-       (fpfit Count3 bin3 if TaxYear==3&bin3>400&bin3<600&(bin3<490|bin3>530)&SerialCount3==1, estopts(degree(4))), 
-	   xline(500) xline(490, lpattern(dash) lcolor(maroon)) xline(530, lpattern(dash) lcolor(maroon))  
+       (fpfit Count3 bin3 if TaxYear==3&bin3>400&bin3<600&(bin3<475|bin3>540)&SerialCount3==1, estopts(degree(4))), 
+	   xline(500) xline(475, lpattern(dash) lcolor(maroon)) xline(540, lpattern(dash) lcolor(maroon))  
 	   title("Bunching in Year 3 at 50 Million cutoff") 
 	   graphregion(color(white)) 
 	   xtitle("Revenue (in .3 million rupees)")
-	   note("Dropping mass between 49 and 53 million. 4th Degree polynomial");
+	   note("Dropping mass between 47.5 and 54 million. 4th Degree polynomial");
 graph save Graph "F:\Bunching_analysis\BunchingYear3_50Million_Degree4_3lac.gph";
 graph export "F:\Bunching_analysis\BunchingYear3_50Million_Degree4_3lac.pdf", as(pdf) replace;
 
@@ -606,11 +606,11 @@ graph save Graph "F:\Bunching_analysis\BunchingYear4_50Million_Degree4_2lac.gph"
 graph export "F:\Bunching_analysis\BunchingYear4_50Million_Degree4_2lac.pdf", as(pdf) replace;
 
 
-
+//&(bin3<490|bin3>530) xline(490, lpattern(dash) lcolor(maroon)) xline(530, lpattern(dash) lcolor(maroon)) 
 #delimit ;
 twoway (connected Count3 bin3 if TaxYear==4&bin3>400&bin3<600&SerialCount3==1, sort) 
-       (fpfit Count3 bin3 if TaxYear==4&bin3>400&bin3<600&(bin3<490|bin3>530)&SerialCount3==1, estopts(degree(4))), 
-	   xline(500) xline(490, lpattern(dash) lcolor(maroon)) xline(530, lpattern(dash) lcolor(maroon))  
+       (fpfit Count3 bin3 if TaxYear==4&bin3>400&bin3<600&SerialCount3==1, estopts(degree(4))), 
+	   xline(500)  
 	   title("Bunching in Year 4 at 50 Million cutoff") 
 	   graphregion(color(white)) 
 	   xtitle("Revenue (in .3 million rupees)")
@@ -718,11 +718,12 @@ graph save Graph "F:\Bunching_analysis\BunchingYear5_50Million_Degree4_2lac.gph"
 graph export "F:\Bunching_analysis\BunchingYear5_50Million_Degree4_2lac.pdf", as(pdf) replace;
 
 
+// /xline(490, lpattern(dash) lcolor(maroon)) xline(530, lpattern(dash) lcolor(maroon))  (bin3<490|bin3>530)
 
 #delimit ;
 twoway (connected Count3 bin3 if TaxYear==5&bin3>400&bin3<600&SerialCount3==1, sort) 
-       (fpfit Count3 bin3 if TaxYear==5&bin3>400&bin3<600&(bin3<490|bin3>530)&SerialCount3==1, estopts(degree(4))), 
-	   xline(500) xline(490, lpattern(dash) lcolor(maroon)) xline(530, lpattern(dash) lcolor(maroon))  
+       (fpfit Count3 bin3 if TaxYear==5&bin3>400&bin3<600&SerialCount3==1, estopts(degree(4))), 
+	   xline(500)  
 	   title("Bunching in Year 5 at 50 Million cutoff") 
 	   graphregion(color(white)) 
 	   xtitle("Revenue (in .3 million rupees)")
