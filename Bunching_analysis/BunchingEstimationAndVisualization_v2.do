@@ -1,11 +1,3 @@
-/* Date: November 28, 2017 */
-/* Author: Shekhar Mittal */
-/* In this file, we calculate the bunching estimates */
-/* We are going to focus on 3 thresholds */
-/* 1. 50 million */
-/* 2. 5 million  */
-/* 3. 1 million */
-/* We are going to do this over 1 bin size */
 
 cd "E:\data"
 
@@ -220,9 +212,14 @@ drop if ZeroTurnover==1
 
 replace TurnoverGross=TurnoverGross/100000
 
+replace MoneyDeposited=MoneyDeposited/100000
+
+
+//For Threshold 3
 egen bin1=cut(TurnoverGross), at(0(1)2000)
 egen bin2=cut(TurnoverGross), at(0(2)2000)
 egen bin3=cut(TurnoverGross), at(0(3)2000)
+
 
 
 bys TaxYear bin1: gen Count=_N
@@ -246,59 +243,8 @@ by TaxYear bin3: egen PC3=mean(PositiveContribution)
 by TaxYear bin3: egen MeanMoneyDeposited3=mean(MoneyDeposited)
 
 
-# delimit ;
-preserve;
-keep if SerialCount3==1;
-keep if TaxYear==3;
+//For Thresholds 1 and 2 
 
-rename bin3 Bin3_1;
-gen Bin3_2=Bin3_1^2;
-gen Bin3_3=Bin3_1^3;
-gen Bin3_4=Bin3_1^4;
-
-reg Count3 Bin3_1 Bin3_2 Bin3_3 Bin3_4 if Bin3_1>400&Bin3_1<600&(Bin3_1<475|Bin3_1>540);
-predict counterfactual;
-
-local constant = _b[_cons]; // This saves the coefficients of the polynomial
-display `constant';
-
-forvalues i =1(1)4	{;
-	local polycoeff`i' = _b[Bin3_`i'];
-	disp `polycoeff`i'';
-	gen Bin3_hat_`i'=`polycoeff`i'' * Bin3_`i';
-};
-
-local constant = _b[_cons]; // This saves the coefficients of the polynomial
-display `constant';
-replace counterfactual=Bin3_hat_1+Bin3_hat_2+Bin3_hat_3+Bin3_hat_4+`constant' if Bin3_1>475&Bin3_1<=540;
-
-gen extra_density = Count3 - counterfactual;
-
-gen below_threshold=.;
-replace below_threshold=1 if Bin3_1<500&Bin3_1>=475;
-replace below_threshold=0 if Bin3_1>=500&Bin3_1<=540;
-
-egen Total_extra_density=total(extra_density), by(below_threshold);
-tab Total_extra_density below_threshold;
-
-sum Total_extra_density if below_threshold==1;
-local B=`r(mean)';
-
-gen weights = extra_density/`B';
-gen ratio_c = counterfactual*weights;
-
-sum ratio_c if below_threshold==1;
-local h_0=`r(mean)'*`r(N)';
-drop ratio_c weights;
-
-// Locals to show in box
-local b=`B'/`h_0';
-local b = round(100*`b')/100;
-disp "Bunching estimate for 50 Million Threshold, in year 2, is `b'";
-restore; 
-
-
-//Bunching at 5 million
 
 
 drop bin1 bin2 bin3
@@ -393,20 +339,19 @@ disp "Bunching estimate for 5 Million Threshold, in year `year', is `b'";
 restore; 
 
 
-*TaxYear==1&bin3>5&bin3<15&(bin3<9|bin3>11)&SerialCount3==1
 
 //Bunching at 1 million
-
 # delimit ;
-local year=1;
-local lb=9;
-local ub=11;
+local year=2;
+local lb=9.4;
+local ub=12;
 local l_cutoff=5;
 local u_cutoff=15;
+local Exception=2000;
 
 preserve;
 keep if SerialCount3==1;
-keep if TaxYear==5;
+keep if TaxYear==`year';
 
 rename bin3 Bin3_1;
 gen Bin3_2=Bin3_1^2;
@@ -459,54 +404,76 @@ restore;
 
 
 
-# delimit ;
-preserve;
-keep if SerialCount2==1;
-keep if TaxYear==1;
+// Values of thresholds
+// When doing 1 Million = 1
+// When doing 5 Million = 5
+// When doing 50 Million = 50
 
-rename bin2 Bin2_1;
-gen Bin2_2=Bin2_1^2;
-gen Bin2_3=Bin2_1^3;
-gen Bin2_4=Bin2_1^4;
 
-reg Count2 Bin2_1 Bin2_2 Bin2_3 Bin2_4 if Bin2_1>5&Bin2_1<15&(Bin2_1<=9|Bin2_1>11);
-predict counterfactual;
+#delimit ;
+local year=3;
+local lb=475;
+local ub=540;
+local cutoff=500;
+local l_cutoff=400;
+local u_cutoff=600;
+local Exception=2000;
 
-local constant = _b[_cons]; // This saves the coefficients of the polynomial
-display `constant';
+local Threshold=50;
 
-forvalues i =1(1)4	{;
-	local polycoeff`i' = _b[Bin2_`i'];
-	disp `polycoeff`i'';
-	gen Bin2_hat_`i'=`polycoeff`i'' * Bin2_`i';
-};
+twoway (connected Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', sort)
+       (fpfit Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&(bin3<`lb'|bin3>`ub')&SerialCount3==1&Count3<`Exception', estopts(degree(4))), 
+	   xline(`cutoff') xline(`lb', lpattern(dash) lcolor(maroon)) xline(`ub', lpattern(dash) lcolor(maroon)) 
+	   title("Bunching in Year `year' at `Threshold' Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in 30,000 rupees)")
+	   note("Dropping mass between `lb' and `ub' lacs(100,000). 4th Degree polynomial.");
+graph save Graph "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_30000.gph";
+graph export "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_30000.pdf", as(pdf) replace;
 
-local constant = _b[_cons]; // This saves the coefficients of the polynomial
-display `constant';
-replace counterfactual=Bin2_hat_1+Bin2_hat_2+Bin2_hat_3+Bin2_hat_4+`constant' if Bin2_1>9&Bin2_1<11;
 
-gen extra_density = Count2 - counterfactual;
+//Printing graphs without the bunching
 
-gen below_threshold=.;
-replace below_threshold=1 if Bin2_1<10&Bin2_1>9;
-replace below_threshold=0 if Bin2_1>=10&Bin2_1<11;
 
-egen Total_extra_density=total(extra_density), by(below_threshold);
-tab Total_extra_density below_threshold;
+#delimit ;
+local year=5;
+local cutoff=500;
+local l_cutoff=400;
+local u_cutoff=600;
+local Exception=2000;
 
-sum Total_extra_density if below_threshold==1;
-local B=`r(mean)';
+local Threshold=50;
 
-gen weights = extra_density/`B';
-gen ratio_c = counterfactual*weights;
+twoway (connected Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', sort)
+       (fpfit Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', estopts(degree(4))), 
+	   xline(`cutoff')
+	   title("Bunching in Year `year' at `Threshold' Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in 30,000 rupees)")
+	   note("4th Degree polynomial.");
+graph save Graph "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_30000.gph";
+graph export "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_30000.pdf", as(pdf) replace;
 
-sum ratio_c if below_threshold==1;
-local h_0=`r(mean)'*`r(N)';
-drop ratio_c weights;
 
-// Locals to show in box
-local b=`B'/`h_0';
-local b = round(100*`b')/100;
-disp "Bunching estimate for 1 Million Threshold, in year 1, is `b'";
-restore; 
+//Revenue Losses
+#delimit ;
+local year=2;
+local lb=9.4;
+local ub=12.5;
+
+local cutoff=10;
+
+egen LowerAverage=mean(MoneyDeposited) if bin3>`lb'&bin3<`cutoff'&TaxYear==`year';
+egen AboveAverage=mean(MoneyDeposited) if bin3>`cutoff'&bin3<`ub'&TaxYear==`year';
+
+sum LowerAverage if TaxYear==`year';
+*local LMean=`r(mean)';
+
+sum AboveAverage if TaxYear==`year';
+*local AMean=`r(mean)';
+
+
+
+
+
 
