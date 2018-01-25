@@ -211,8 +211,9 @@ replace ZeroTurnover=1 if TurnoverGross==0
 drop if ZeroTurnover==1
 
 replace TurnoverGross=TurnoverGross/100000
-
 replace MoneyDeposited=MoneyDeposited/100000
+gen VR=MoneyDeposited/TurnoverGross
+
 
 
 //For Threshold 3
@@ -224,28 +225,28 @@ egen bin3=cut(TurnoverGross), at(0(3)2000)
 
 bys TaxYear bin1: gen Count=_N
 by TaxYear bin1: gen SerialCount=_n
-by TaxYear bin1: gen VatRatio=MoneyDeposited/TurnoverGross
+by TaxYear bin1: egen VatRatio=mean(VR)
 by TaxYear bin1: egen PC=mean(PositiveContribution)
 by TaxYear bin1: egen MeanMoneyDeposited=mean(MoneyDeposited)
 
 
 bys TaxYear bin2: gen Count2=_N
 by TaxYear bin2: gen SerialCount2=_n
-by TaxYear bin2: gen VatRatio2=MoneyDeposited/TurnoverGross
+by TaxYear bin2: egen VatRatio2=mean(VR)
 by TaxYear bin2: egen PC2=mean(PositiveContribution)
 by TaxYear bin2: egen MeanMoneyDeposited2=mean(MoneyDeposited)
 
 
 bys TaxYear bin3: gen Count3=_N
 by TaxYear bin3: gen SerialCount3=_n
-by TaxYear bin3: gen VatRatio3=MoneyDeposited/TurnoverGross
+by TaxYear bin3: egen VatRatio3=mean(VR)
 by TaxYear bin3: egen PC3=mean(PositiveContribution)
 by TaxYear bin3: egen MeanMoneyDeposited3=mean(MoneyDeposited)
 
 
+
+
 //For Thresholds 1 and 2 
-
-
 
 drop bin1 bin2 bin3
 drop Count Count2 Count3
@@ -262,21 +263,22 @@ egen bin3=cut(TurnoverGross), at(0(.3)200)
 
 bys TaxYear bin1: gen Count=_N
 by TaxYear bin1: gen SerialCount=_n
-by TaxYear bin1: gen VatRatio=MoneyDeposited/TurnoverGross
 by TaxYear bin1: egen PC=mean(PositiveContribution)
 by TaxYear bin1: egen MeanMoneyDeposited=mean(MoneyDeposited)
+by TaxYear bin1: egen VatRatio=mean(VR)
+
 
 
 bys TaxYear bin2: gen Count2=_N
 by TaxYear bin2: gen SerialCount2=_n
-by TaxYear bin2: gen VatRatio2=MoneyDeposited/TurnoverGross
+by TaxYear bin2: egen VatRatio2=mean(VR)
 by TaxYear bin2: egen PC2=mean(PositiveContribution)
 by TaxYear bin2: egen MeanMoneyDeposited2=mean(MoneyDeposited)
 
 
 bys TaxYear bin3: gen Count3=_N
 by TaxYear bin3: gen SerialCount3=_n
-by TaxYear bin3: gen VatRatio3=MoneyDeposited/TurnoverGross
+by TaxYear bin3: egen VatRatio3=mean(VR)
 by TaxYear bin3: egen PC3=mean(PositiveContribution)
 by TaxYear bin3: egen MeanMoneyDeposited3=mean(MoneyDeposited)
 
@@ -432,18 +434,53 @@ graph save Graph "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Deg
 graph export "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_30000.pdf", as(pdf) replace;
 
 
+//Printing VAT Ratios
+#delimit ;
+local year=2;
+local lb=9.4;
+local ub=12.5;
+local cutoff=10;
+local l_cutoff=5;
+local u_cutoff=15;
+local Exception=2000;
+local Threshold=1;
+
+/*twoway (connected PC3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', sort)
+       (fpfit PC3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&(bin3<`lb'|bin3>`ub')&SerialCount3==1&Count3<`Exception', estopts(degree(4))), 
+	   xline(`cutoff') xline(`lb', lpattern(dash) lcolor(maroon)) xline(`ub', lpattern(dash) lcolor(maroon)) 
+	   title("Proportion of firms with Positive Contribution" "in Year `year' at `Threshold' Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in 30,000 rupees)")
+	   note("Dropping mass between `lb' and `ub' lacs(100,000). 4th Degree polynomial.");
+graph save Graph "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_PC.gph";
+graph export "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_PC.pdf", as(pdf) replace;
+*/
+
+twoway (connected VatRatio3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', sort)
+       (fpfit VatRatio3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&(bin3<`lb'|bin3>`ub')&SerialCount3==1&Count3<`Exception', estopts(degree(4))), 
+	   xline(`cutoff') xline(`lb', lpattern(dash) lcolor(maroon)) xline(`ub', lpattern(dash) lcolor(maroon)) 
+	   title("VAT Ratio in Year `year' at `Threshold' Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in 30,000 rupees)")
+	   note("Dropping mass between `lb' and `ub' lacs(100,000). 4th Degree polynomial.");
+graph save Graph "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_VatRatio.gph";
+graph export "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_VatRatio.pdf", as(pdf) replace;
+
+
+
 //Printing graphs without the bunching
 
 
 #delimit ;
 local year=5;
-local cutoff=500;
-local l_cutoff=400;
-local u_cutoff=600;
+local cutoff=10;
+local l_cutoff=5;
+local u_cutoff=15;
 local Exception=2000;
 
-local Threshold=50;
+local Threshold=1;
 
+/*
 twoway (connected Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', sort)
        (fpfit Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', estopts(degree(4))), 
 	   xline(`cutoff')
@@ -453,6 +490,76 @@ twoway (connected Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'
 	   note("4th Degree polynomial.");
 graph save Graph "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_30000.gph";
 graph export "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_30000.pdf", as(pdf) replace;
+
+*/
+
+twoway (connected VatRatio3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', sort)
+       (fpfit VatRatio3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', estopts(degree(4))), 
+	   xline(`cutoff')
+	   title("VAT Ratio in Year `year' at `Threshold' Million cutoff") 
+	   graphregion(color(white)) 
+	   xtitle("Revenue (in 30,000 rupees)")
+	   note("4th Degree polynomial.");
+graph save Graph "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_VatRatio.gph";
+graph export "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_VatRatio.pdf", as(pdf) replace;
+
+
+
+//Printing Turnover Related graphs
+
+
+
+#delimit ;
+histogram TurnoverGross if TurnoverGross<100&TurnoverGross>0, 
+	frequency
+	title("Turnover Distribution in Frequency (All Years)") 
+	graphregion(color(white)) 
+	note("TurnoverGross<100 Million. Turnover>0. Amounts in million rupees ")
+	xline(1) xline(5) xline(50);
+graph save Graph "F:\Bunching_analysis\TurnoverDistribution_Frequency_StrictlyPositive.gph";
+graph export "F:\Bunching_analysis\TurnoverDistribution_Frequency_StrictlyPositive.pdf", as(pdf) replace;
+
+#delimit ;
+histogram TurnoverGross if TurnoverGross<1000&TurnoverGross>0, 
+	frequency
+	title("Turnover Distribution in Frequency (All Years)") 
+	graphregion(color(white)) 
+	note("TurnoverGross<1 Billion. Turnover>0. Amounts in million rupees ")
+	xline(1) xline(5) xline(50);
+graph save Graph "F:\Bunching_analysis\TurnoverDistribution_Frequency_StrictlyPositive.gph";
+graph export "F:\Bunching_analysis\TurnoverDistribution_Frequency_StrictlyPositive.pdf", as(pdf) replace;
+
+#delimit ;
+histogram TurnoverGross if TurnoverGross<1000&TurnoverGross>=0, 
+	frequency
+	title("Turnover Distribution in Frequency (All Years)") 
+	graphregion(color(white)) 
+	xline(1) xline(5) xline(50)
+	note("TurnoverGross<1 Billion. Amounts in million rupees ");
+graph save Graph "F:\Bunching_analysis\TurnoverDistribution_Frequency_WeaklyPositive.gph";
+graph export "F:\Bunching_analysis\TurnoverDistribution_Frequency_WeaklyPositive.pdf", as(pdf) replace;
+
+
+#delimit ;
+histogram TurnoverGross if TurnoverGross<1000&TurnoverGross>0, 
+	fraction
+	title("Turnover Distribution in Frequency (All Years)") 
+	graphregion(color(white)) 
+	xline(1) xline(5) xline(50)
+	note("TurnoverGross<1 Billion. Turnover>0. Amounts in million rupees ");
+graph save Graph "F:\Bunching_analysis\TurnoverDistribution_Fraction_StrictlyPositive.gph";
+graph export "F:\Bunching_analysis\TurnoverDistribution_Fraction_StrictlyPositive.pdf", as(pdf) replace;
+
+#delimit ;
+histogram TurnoverGross if TurnoverGross<1000&TurnoverGross>=0, 
+	fraction
+	title("Turnover Distribution in Frequency (All Years)") 
+	graphregion(color(white)) 
+	xline(1) xline(5) xline(50)
+	note("TurnoverGross<1 Billion. Amounts in million rupees ");
+graph save Graph "F:\Bunching_analysis\TurnoverDistribution_Fraction_WeaklyPositive.gph";
+graph export "F:\Bunching_analysis\TurnoverDistribution_Fraction_WeaklyPositive.pdf", as(pdf) replace;
+
 
 
 //Revenue Losses

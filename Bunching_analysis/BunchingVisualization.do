@@ -219,7 +219,10 @@ replace ZeroTurnover=1 if TurnoverGross==0
 
 drop if ZeroTurnover==1
 
+
 replace TurnoverGross=TurnoverGross/100000
+replace MoneyDeposited=MoneyDeposited/100000
+gen VR=MoneyDeposited/TurnoverGross
 
 egen bin1=cut(TurnoverGross), at(0(1)2000)
 egen bin2=cut(TurnoverGross), at(0(2)2000)
@@ -228,21 +231,21 @@ egen bin3=cut(TurnoverGross), at(0(3)2000)
 
 bys TaxYear bin1: gen Count=_N
 by TaxYear bin1: gen SerialCount=_n
-by TaxYear bin1: gen VatRatio=MoneyDeposited/TurnoverGross
+by TaxYear bin1: egen VatRatio=mean(VR)
 by TaxYear bin1: egen PC=mean(PositiveContribution)
 by TaxYear bin1: egen MeanMoneyDeposited=mean(MoneyDeposited)
 
 
 bys TaxYear bin2: gen Count2=_N
 by TaxYear bin2: gen SerialCount2=_n
-by TaxYear bin2: gen VatRatio2=MoneyDeposited/TurnoverGross
+by TaxYear bin2: egen VatRatio2=mean(VR)
 by TaxYear bin2: egen PC2=mean(PositiveContribution)
 by TaxYear bin2: egen MeanMoneyDeposited2=mean(MoneyDeposited)
 
 
 bys TaxYear bin3: gen Count3=_N
 by TaxYear bin3: gen SerialCount3=_n
-by TaxYear bin3: gen VatRatio3=MoneyDeposited/TurnoverGross
+by TaxYear bin3: egen VatRatio3=mean(VR)
 by TaxYear bin3: egen PC3=mean(PositiveContribution)
 by TaxYear bin3: egen MeanMoneyDeposited3=mean(MoneyDeposited)
 
@@ -827,21 +830,21 @@ egen bin3=cut(TurnoverGross), at(0(.3)200)
 
 bys TaxYear bin1: gen Count=_N
 by TaxYear bin1: gen SerialCount=_n
-by TaxYear bin1: gen VatRatio=MoneyDeposited/TurnoverGross
+by TaxYear bin1: egen VatRatio=mean(VR)
 by TaxYear bin1: egen PC=mean(PositiveContribution)
 by TaxYear bin1: egen MeanMoneyDeposited=mean(MoneyDeposited)
 
 
 bys TaxYear bin2: gen Count2=_N
 by TaxYear bin2: gen SerialCount2=_n
-by TaxYear bin2: gen VatRatio2=MoneyDeposited/TurnoverGross
+by TaxYear bin2: egen VatRatio2=mean(VR)
 by TaxYear bin2: egen PC2=mean(PositiveContribution)
 by TaxYear bin2: egen MeanMoneyDeposited2=mean(MoneyDeposited)
 
 
 bys TaxYear bin3: gen Count3=_N
 by TaxYear bin3: gen SerialCount3=_n
-by TaxYear bin3: gen VatRatio3=MoneyDeposited/TurnoverGross
+by TaxYear bin3: egen VatRatio3=mean(VR)
 by TaxYear bin3: egen PC3=mean(PositiveContribution)
 by TaxYear bin3: egen MeanMoneyDeposited3=mean(MoneyDeposited)
 
@@ -1177,21 +1180,21 @@ egen bin3=cut(TurnoverGross), at(0(.3)200)
 
 bys TaxYear bin1: gen Count=_N
 by TaxYear bin1: gen SerialCount=_n
-by TaxYear bin1: gen VatRatio=MoneyDeposited/TurnoverGross
+by TaxYear bin1: egen VatRatio=mean(VR)
 by TaxYear bin1: egen PC=mean(PositiveContribution)
 by TaxYear bin1: egen MeanMoneyDeposited=mean(MoneyDeposited)
 
 
 bys TaxYear bin2: gen Count2=_N
 by TaxYear bin2: gen SerialCount2=_n
-by TaxYear bin2: gen VatRatio2=MoneyDeposited/TurnoverGross
+by TaxYear bin2: egen VatRatio2=mean(VR)
 by TaxYear bin2: egen PC2=mean(PositiveContribution)
 by TaxYear bin2: egen MeanMoneyDeposited2=mean(MoneyDeposited)
 
 
 bys TaxYear bin3: gen Count3=_N
 by TaxYear bin3: gen SerialCount3=_n
-by TaxYear bin3: gen VatRatio3=MoneyDeposited/TurnoverGross
+by TaxYear bin3: egen VatRatio3=mean(VR)
 by TaxYear bin3: egen PC3=mean(PositiveContribution)
 by TaxYear bin3: egen MeanMoneyDeposited3=mean(MoneyDeposited)
 
