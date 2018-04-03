@@ -240,12 +240,6 @@ replace QuarterlyCategory=1 if (TaxYear==4|TaxYear==5)
 replace MonthlyCategory=1 if TurnoverGross>500&(TaxYear==1|TaxYear==2|TaxYear==3)
 
 
-reg VR NumberReports, cluster(DealerTIN)
-reg VR SemiAnnualCategory QuarterlyCategory MonthlyCategory, cluster(DealerTIN)
-
-reg VR NumberReports TurnoverGross, cluster(DealerTIN)
-reg VR SemiAnnualCategory QuarterlyCategory MonthlyCategory TurnoverGross, cluster(DealerTIN)
-
 destring DealerTIN, replace
 xtset DealerTIN TaxYear
 
@@ -261,15 +255,173 @@ replace iTaxYear3=1 if TaxYear==3
 replace iTaxYear4=1 if TaxYear==4
 replace iTaxYear5=1 if TaxYear==5
 
-areg VR NumberReports iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5, absorb(DealerTIN) cluster(DealerTIN)
-areg VR SemiAnnualCategory QuarterlyCategory MonthlyCategory iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5, absorb(DealerTIN) cluster(DealerTIN)
 
-areg VR NumberReports iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 TurnoverGross, absorb(DealerTIN) cluster(DealerTIN)
-areg VR SemiAnnualCategory QuarterlyCategory MonthlyCategory iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 TurnoverGross, absorb(DealerTIN) cluster(DealerTIN)
+cd "F:\Bunching_analysis\"
+
+#delimit ;
+log using "F:\Bunching_analysis\RegressionLogs_VatRatioVsFilingFrequency_v2.log", replace;
+
+reg VR NumberReports, cluster(DealerTIN);
+outreg2 using NumberReports.tex, 
+		replace 
+		nocons 
+		keep(NumberReports) 
+		title("Vat Ratio Regressions")
+		addtext(Firm FE, NO, Time FE, NO);
+
+reg VR NumberReports iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5, cluster(DealerTIN);
+outreg2 using NumberReports.tex, 
+		append 
+		nocons 
+		keep(NumberReports)
+		addtext(Firm FE, NO, Time FE, YES);
 
 
-log using "F:\Bunching_analysis\RegressionLogs_VatRatioVsFilingFrequency.log"
-log close
+areg VR NumberReports, absorb(DealerTIN) cluster(DealerTIN);
+outreg2 using NumberReports.tex, 
+		append 
+		nocons 
+		keep(NumberReports)
+		addtext(Firm FE, YES, Time FE, NO);
+ 
+
+xtreg VR NumberReports, cluster(DealerTIN);
+
+areg VR NumberReports iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5, 
+		absorb(DealerTIN) cluster(DealerTIN);
+outreg2 using NumberReports.tex, 
+		append 
+		nocons 
+		keep(NumberReports) 
+		addtext(Firm FE, YES, Time FE, YES);
+
+log close;
+		
+
+		
+#delimit ;
+log using "F:\Bunching_analysis\RegressionLogs_VatRatioVsFilingFrequency_v2.log", append;
+		
+reg VR NumberReports TurnoverGross, cluster(DealerTIN);
+outreg2 using NumberReports_Turnover.tex, 
+		replace 
+		nocons 
+		keep(NumberReports) 
+		title("Vat Ratio Regressions")
+		addtext(Firm FE, NO, Time FE, NO);
+
+
+reg VR NumberReports iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 TurnoverGross, cluster(DealerTIN);
+outreg2 using NumberReports_Turnover.tex, 
+		append 
+		nocons 
+		keep(NumberReports) 
+		addtext(Firm FE, NO, Time FE, YES);
+
+
+
+areg VR NumberReports TurnoverGross, absorb(DealerTIN) cluster(DealerTIN);
+outreg2 using NumberReports_Turnover.tex, 
+		append 
+		nocons 
+		keep(NumberReports) 
+		addtext(Firm FE, YES, Time FE, NO);
+
+
+areg VR NumberReports iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 TurnoverGross, absorb(DealerTIN) cluster(DealerTIN);
+outreg2 using NumberReports_Turnover.tex, 
+		append 
+		nocons 
+		keep(NumberReports) 
+		addtext(Firm FE, YES, Time FE, YES);
+
+log close;
+		
+#delimit ;
+log using "F:\Bunching_analysis\RegressionLogs_VatRatioVsFilingFrequency_v2.log", append;
+		
+
+#delimit ;
+reg VR SemiAnnualCategory QuarterlyCategory MonthlyCategory, cluster(DealerTIN);
+outreg2 using FilingCategory.tex, 
+		replace 
+		nocons 
+		keep(SemiAnnualCategory QuarterlyCategory MonthlyCategory) 
+		title("Vat Ratio Regressions")  
+		addtext(Firm FE, NO, Time FE, NO);
+
+reg VR SemiAnnualCategory QuarterlyCategory MonthlyCategory iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5, cluster(DealerTIN);
+outreg2 using FilingCategory.tex, 
+		append 
+		nocons 
+		keep(SemiAnnualCategory QuarterlyCategory MonthlyCategory)
+		addtext(Firm FE, NO, Time FE, YES);
+
+areg VR SemiAnnualCategory QuarterlyCategory MonthlyCategory, absorb(DealerTIN) cluster(DealerTIN);
+outreg2 using FilingCategory.tex, 
+		append 
+		nocons 
+		keep(SemiAnnualCategory QuarterlyCategory MonthlyCategory)
+		addtext(Firm FE, YES, Time FE, NO);
+
+
+xtreg VR SemiAnnualCategory QuarterlyCategory MonthlyCategory,cluster(DealerTIN);
+
+areg VR SemiAnnualCategory QuarterlyCategory MonthlyCategory iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5, 
+		absorb(DealerTIN) cluster(DealerTIN);
+outreg2 using FilingCategory.tex, 
+		append 
+		nocons 
+		keep(SemiAnnualCategory QuarterlyCategory MonthlyCategory)
+		addtext(Firm FE, YES, Time FE, YES);
+
+log close;
+		
+#delimit ;
+log using "F:\Bunching_analysis\RegressionLogs_VatRatioVsFilingFrequency_v2.log", append;
+
+		
+		
+
+reg VR SemiAnnualCategory QuarterlyCategory MonthlyCategory TurnoverGross, cluster(DealerTIN);
+outreg2 using FilingCategory_Turnover.tex, 
+		replace 
+		nocons 
+		keep(SemiAnnualCategory QuarterlyCategory MonthlyCategory) 
+		title("Vat Ratio Regressions")
+		addtext(Firm FE, NO, Time FE, NO);
+
+reg VR SemiAnnualCategory QuarterlyCategory MonthlyCategory 
+		iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 TurnoverGross, 
+		cluster(DealerTIN);
+outreg2 using FilingCategory_Turnover.tex, 
+		append 
+		nocons 
+		keep(SemiAnnualCategory QuarterlyCategory MonthlyCategory)
+		addtext(Firm FE, NO, Time FE, YES);
+
+areg VR SemiAnnualCategory QuarterlyCategory MonthlyCategory TurnoverGross, 
+		absorb(DealerTIN) cluster(DealerTIN);
+outreg2 using FilingCategory_Turnover.tex, 
+		append 
+		nocons 
+		keep(SemiAnnualCategory QuarterlyCategory MonthlyCategory)
+		addtext(Firm FE, YES, Time FE, NO);
+		
+
+xtreg VR SemiAnnualCategory QuarterlyCategory MonthlyCategory,cluster(DealerTIN);
+
+areg VR SemiAnnualCategory QuarterlyCategory MonthlyCategory 
+		iTaxYear2 iTaxYear3 iTaxYear4 iTaxYear5 TurnoverGross, 
+		absorb(DealerTIN) cluster(DealerTIN);
+outreg2 using FilingCategory_Turnover.tex, 
+		append 
+		nocons 
+		keep(SemiAnnualCategory QuarterlyCategory MonthlyCategory)
+		addtext(Firm FE, YES, Time FE, YES);
+
+
+log close;
 
 
 //Dynamic Analysis

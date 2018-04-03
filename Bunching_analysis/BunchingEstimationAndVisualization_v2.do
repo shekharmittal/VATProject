@@ -255,10 +255,15 @@ drop VatRatio VatRatio2 VatRatio3
 drop PC PC2 PC3
 drop MeanMoneyDeposited MeanMoneyDeposited2 MeanMoneyDeposited3
 
+	egen bin1=cut(TurnoverGross), at(0(.1)200)
+	egen bin2=cut(TurnoverGross), at(0(.2)200)
+	egen bin3=cut(TurnoverGross), at(0(.3)200)
+/*
 
-egen bin1=cut(TurnoverGross), at(0(.1)200)
-egen bin2=cut(TurnoverGross), at(0(.2)200)
-egen bin3=cut(TurnoverGross), at(0(.3)200)
+egen bin1=cut(TurnoverGross), at(300(.1)700)
+egen bin2=cut(TurnoverGross), at(300(.2)700)
+egen bin3=cut(TurnoverGross), at(0(.3)700)
+*/
 
 
 bys TaxYear bin1: gen Count=_N
@@ -287,8 +292,8 @@ by TaxYear bin3: egen MeanMoneyDeposited3=mean(MoneyDeposited)
 
 # delimit ;
 local year=1;
-local lb=49;
-local ub=51.5;
+local lb=495;
+local ub=512;
 
 preserve;
 keep if SerialCount3==1;
@@ -299,7 +304,7 @@ gen Bin3_2=Bin3_1^2;
 gen Bin3_3=Bin3_1^3;
 gen Bin3_4=Bin3_1^4;
 
-reg Count3 Bin3_1 Bin3_2 Bin3_3 Bin3_4 if Bin3_1>40&Bin3_1<60&(Bin3_1<`lb'|Bin3_1>`ub')&Count3<330;
+reg Count3 Bin3_1 Bin3_2 Bin3_3 Bin3_4 if Bin3_1>400&Bin3_1<600&(Bin3_1<`lb'|Bin3_1>`ub')&Count3<2000;
 predict counterfactual;
 
 local constant = _b[_cons]; // This saves the coefficients of the polynomial
@@ -318,8 +323,8 @@ replace counterfactual=Bin3_hat_1+Bin3_hat_2+Bin3_hat_3+Bin3_hat_4+`constant' if
 gen extra_density = Count3 - counterfactual;
 
 gen below_threshold=.;
-replace below_threshold=1 if Bin3_1<50&Bin3_1>=`lb';
-replace below_threshold=0 if Bin3_1>=50&Bin3_1<`ub';
+replace below_threshold=1 if Bin3_1<500&Bin3_1>=`lb';
+replace below_threshold=0 if Bin3_1>=500&Bin3_1<`ub';
 
 egen Total_extra_density=total(extra_density), by(below_threshold);
 tab Total_extra_density below_threshold;
@@ -413,15 +418,15 @@ restore;
 
 
 #delimit ;
-local year=3;
-local lb=475;
-local ub=540;
-local cutoff=500;
-local l_cutoff=400;
-local u_cutoff=600;
-local Exception=2000;
+local year=1;
+local lb=49;
+local ub=51.5;
+local cutoff=50;
+local l_cutoff=40;
+local u_cutoff=60;
+local Exception=500;
 
-local Threshold=50;
+local Threshold=5;
 
 twoway (connected Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', sort)
        (fpfit Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&(bin3<`lb'|bin3>`ub')&SerialCount3==1&Count3<`Exception', estopts(degree(4))), 
@@ -434,9 +439,22 @@ graph save Graph "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Deg
 graph export "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_30000.pdf", as(pdf) replace;
 
 
+#delimit ;
+local year=4;
+local lb=0;
+local ub=600;
+local Exception=2000;
+
+
+twoway (bar Count3 bin3 if TaxYear==`year'&bin3>`lb'&bin3<`ub'&SerialCount3==1, sort), 
+	   title("Bunching in Year `year' at `Threshold' Million cutoff") 
+	   graphregion(color(white)) 
+	   note("Dropping mass between `lb' and `ub' lacs(100,000). 4th Degree polynomial.");
+
+
 //Printing VAT Ratios
 #delimit ;
-local year=2;
+local year=;
 local lb=9.4;
 local ub=12.5;
 local cutoff=10;
@@ -506,9 +524,6 @@ graph export "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4
 
 
 //Printing Turnover Related graphs
-
-
-
 #delimit ;
 histogram TurnoverGross if TurnoverGross<100&TurnoverGross>0, 
 	frequency
@@ -561,14 +576,15 @@ graph save Graph "F:\Bunching_analysis\TurnoverDistribution_Fraction_WeaklyPosit
 graph export "F:\Bunching_analysis\TurnoverDistribution_Fraction_WeaklyPositive.pdf", as(pdf) replace;
 
 
+drop LowerAverage AboveAverage
 
 //Revenue Losses
 #delimit ;
-local year=2;
-local lb=9.4;
-local ub=12.5;
+local year=1;
+local lb=495;
+local ub=512;
 
-local cutoff=10;
+local cutoff=500;
 
 egen LowerAverage=mean(MoneyDeposited) if bin3>`lb'&bin3<`cutoff'&TaxYear==`year';
 egen AboveAverage=mean(MoneyDeposited) if bin3>`cutoff'&bin3<`ub'&TaxYear==`year';
