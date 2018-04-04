@@ -1,11 +1,9 @@
-
 cd "E:\data"
 
 //use "PreliminaryAnalysis\returns\form16_data_v3_0901.dta", clear
 use "PreliminaryAnalysis\returns\form16_data_v4_01122017.dta", clear
 
 drop if TaxPeriod=="Annual-2012"|TaxPeriod=="First Halfyear-2012"|TaxPeriod=="Second Halfyear-2012"|TaxPeriod=="Apr-2013"|TaxPeriod=="May-2013"
-
 
 gen TaxYear=0
 replace TaxYear=1 if TaxPeriod=="Annual-2010"
@@ -215,27 +213,8 @@ replace MoneyDeposited=MoneyDeposited/100000
 gen VR=MoneyDeposited/TurnoverGross
 
 
-
 //For Threshold 3
-egen bin1=cut(TurnoverGross), at(0(1)2000)
-egen bin2=cut(TurnoverGross), at(0(2)2000)
-egen bin3=cut(TurnoverGross), at(0(3)2000)
-
-
-
-bys TaxYear bin1: gen Count=_N
-by TaxYear bin1: gen SerialCount=_n
-by TaxYear bin1: egen VatRatio=mean(VR)
-by TaxYear bin1: egen PC=mean(PositiveContribution)
-by TaxYear bin1: egen MeanMoneyDeposited=mean(MoneyDeposited)
-
-
-bys TaxYear bin2: gen Count2=_N
-by TaxYear bin2: gen SerialCount2=_n
-by TaxYear bin2: egen VatRatio2=mean(VR)
-by TaxYear bin2: egen PC2=mean(PositiveContribution)
-by TaxYear bin2: egen MeanMoneyDeposited2=mean(MoneyDeposited)
-
+egen bin3=cut(TurnoverGross), at(0(3)1000)
 
 bys TaxYear bin3: gen Count3=_N
 by TaxYear bin3: gen SerialCount3=_n
@@ -244,20 +223,12 @@ by TaxYear bin3: egen PC3=mean(PositiveContribution)
 by TaxYear bin3: egen MeanMoneyDeposited3=mean(MoneyDeposited)
 
 
-
-
 //For Thresholds 1 and 2 
+drop bin3 Count3 SerialCount3 VatRatio3 PC3 MeanMoneyDeposited3
 
-drop bin1 bin2 bin3
-drop Count Count2 Count3
-drop SerialCount SerialCount2 SerialCount3
-drop VatRatio VatRatio2 VatRatio3
-drop PC PC2 PC3
-drop MeanMoneyDeposited MeanMoneyDeposited2 MeanMoneyDeposited3
-
-	egen bin1=cut(TurnoverGross), at(0(.1)200)
-	egen bin2=cut(TurnoverGross), at(0(.2)200)
-	egen bin3=cut(TurnoverGross), at(0(.3)200)
+egen bin1=cut(TurnoverGross), at(0(.1)200)
+egen bin2=cut(TurnoverGross), at(0(.2)200)
+egen bin3=cut(TurnoverGross), at(0(.3)200)
 /*
 
 egen bin1=cut(TurnoverGross), at(300(.1)700)
@@ -266,21 +237,6 @@ egen bin3=cut(TurnoverGross), at(0(.3)700)
 */
 
 
-bys TaxYear bin1: gen Count=_N
-by TaxYear bin1: gen SerialCount=_n
-by TaxYear bin1: egen PC=mean(PositiveContribution)
-by TaxYear bin1: egen MeanMoneyDeposited=mean(MoneyDeposited)
-by TaxYear bin1: egen VatRatio=mean(VR)
-
-
-
-bys TaxYear bin2: gen Count2=_N
-by TaxYear bin2: gen SerialCount2=_n
-by TaxYear bin2: egen VatRatio2=mean(VR)
-by TaxYear bin2: egen PC2=mean(PositiveContribution)
-by TaxYear bin2: egen MeanMoneyDeposited2=mean(MoneyDeposited)
-
-
 bys TaxYear bin3: gen Count3=_N
 by TaxYear bin3: gen SerialCount3=_n
 by TaxYear bin3: egen VatRatio3=mean(VR)
@@ -288,145 +244,21 @@ by TaxYear bin3: egen PC3=mean(PositiveContribution)
 by TaxYear bin3: egen MeanMoneyDeposited3=mean(MoneyDeposited)
 
 
-* for year 1 
-
-# delimit ;
-local year=1;
-local lb=495;
-local ub=512;
-
-preserve;
-keep if SerialCount3==1;
-keep if TaxYear==`year'; 
-
-rename bin3 Bin3_1;
-gen Bin3_2=Bin3_1^2;
-gen Bin3_3=Bin3_1^3;
-gen Bin3_4=Bin3_1^4;
-
-reg Count3 Bin3_1 Bin3_2 Bin3_3 Bin3_4 if Bin3_1>400&Bin3_1<600&(Bin3_1<`lb'|Bin3_1>`ub')&Count3<2000;
-predict counterfactual;
-
-local constant = _b[_cons]; // This saves the coefficients of the polynomial
-display `constant';
-
-forvalues i =1(1)4	{;
-	local polycoeff`i' = _b[Bin3_`i'];
-	disp `polycoeff`i'';
-	gen Bin3_hat_`i'=`polycoeff`i'' * Bin3_`i';
-};
-
-local constant = _b[_cons]; // This saves the coefficients of the polynomial
-display `constant';
-replace counterfactual=Bin3_hat_1+Bin3_hat_2+Bin3_hat_3+Bin3_hat_4+`constant' if Bin3_1>`lb'&Bin3_1<`ub';
-
-gen extra_density = Count3 - counterfactual;
-
-gen below_threshold=.;
-replace below_threshold=1 if Bin3_1<500&Bin3_1>=`lb';
-replace below_threshold=0 if Bin3_1>=500&Bin3_1<`ub';
-
-egen Total_extra_density=total(extra_density), by(below_threshold);
-tab Total_extra_density below_threshold;
-
-sum Total_extra_density if below_threshold==1;
-local B=`r(mean)';
-
-gen weights = extra_density/`B';
-gen ratio_c = counterfactual*weights;
-
-sum ratio_c if below_threshold==1;
-local h_0=`r(mean)'*`r(N)';
-drop ratio_c weights;
-
-// Locals to show in box
-local b=`B'/`h_0';
-local b = round(100*`b')/100;
-disp "Bunching estimate for 5 Million Threshold, in year `year', is `b'";
-restore; 
-
-
-
-//Bunching at 1 million
-# delimit ;
-local year=2;
-local lb=9.4;
-local ub=12;
-local l_cutoff=5;
-local u_cutoff=15;
-local Exception=2000;
-
-preserve;
-keep if SerialCount3==1;
-keep if TaxYear==`year';
-
-rename bin3 Bin3_1;
-gen Bin3_2=Bin3_1^2;
-gen Bin3_3=Bin3_1^3;
-gen Bin3_4=Bin3_1^4;
-
-// for year 1 &Count3<330
-# delimit ;
-reg Count3 Bin3_1 Bin3_2 Bin3_3 Bin3_4 if Bin3_1>`l_cutoff'&Bin3_1<`u_cutoff'&(Bin3_1<`lb'|Bin3_1>`ub');
-predict counterfactual;
-
-local constant = _b[_cons]; // This saves the coefficients of the polynomial
-display `constant';
-
-forvalues i =1(1)4	{;
-	local polycoeff`i' = _b[Bin3_`i'];
-	disp `polycoeff`i'';
-	gen Bin3_hat_`i'=`polycoeff`i'' * Bin3_`i';
-};
-
-local constant = _b[_cons]; // This saves the coefficients of the polynomial
-display `constant';
-replace counterfactual=Bin3_hat_1+Bin3_hat_2+Bin3_hat_3+Bin3_hat_4+`constant' if Bin3_1>=`lb'&Bin3_1<`ub';
-
-# delimit ;
-gen extra_density = Count3 - counterfactual;
-
-gen below_threshold=.;
-replace below_threshold=1 if Bin3_1<10&Bin3_1>=`lb';
-replace below_threshold=0 if Bin3_1>=10&Bin3_1<`ub';
-
-egen Total_extra_density=total(extra_density), by(below_threshold);
-tab Total_extra_density below_threshold;
-
-sum Total_extra_density if below_threshold==1;
-local B=`r(mean)';
-
-gen weights = extra_density/`B';
-gen ratio_c = counterfactual*weights;
-
-sum ratio_c if below_threshold==1;
-local h_0=`r(mean)'*`r(N)';
-drop ratio_c weights;
-
-// Locals to show in box
-local b=`B'/`h_0';
-local b = round(100*`b')/100;
-disp "Bunching estimate for 1 Million Threshold, in year `year', is `b'";
-restore; 
-
-
-
 // Values of thresholds
 // When doing 1 Million = 1
 // When doing 5 Million = 5
 // When doing 50 Million = 50
 
-
 #delimit ;
-local year=1;
-local lb=49;
-local ub=51.5;
-local cutoff=50;
-local l_cutoff=40;
-local u_cutoff=60;
-local Exception=500;
+local year=3;
+local lb=475;
+local ub=540;
+local cutoff=500;
+local l_cutoff=400;
+local u_cutoff=600;
+local Exception=1100;
 
-local Threshold=5;
+local Threshold=50;
 
 twoway (connected Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', sort)
        (fpfit Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&(bin3<`lb'|bin3>`ub')&SerialCount3==1&Count3<`Exception', estopts(degree(4))), 
@@ -439,12 +271,75 @@ graph save Graph "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Deg
 graph export "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_30000.pdf", as(pdf) replace;
 
 
+# delimit ;
+local year=3;
+local lb=475;
+local ub=540;
+local l_cutoff=400;
+local u_cutoff=600;
+local cutoff=500;
+local Exception=1100;
+local Threshold=50;
+
+preserve;
+keep if SerialCount3==1;
+keep if TaxYear==`year';
+
+rename bin3 Bin3_1;
+gen Bin3_2=Bin3_1^2;
+gen Bin3_3=Bin3_1^3;
+gen Bin3_4=Bin3_1^4;
+	
+# delimit ;
+reg Count3 Bin3_1 Bin3_2 Bin3_3 Bin3_4 if Bin3_1>`l_cutoff'&Bin3_1<`u_cutoff'&(Bin3_1<=`lb'|Bin3_1>`ub')&Count3<`Exception';
+predict counterfactual;
+
+local constant = _b[_cons]; // This saves the coefficients of the polynomial
+display `constant';
+
+forvalues i =1(1)4	{;
+	local polycoeff`i' = _b[Bin3_`i'];
+	disp `polycoeff`i'';
+	gen Bin3_hat_`i'=`polycoeff`i'' * Bin3_`i';
+};
+
+local constant = _b[_cons]; // This saves the coefficients of the polynomial
+display `constant';
+replace counterfactual=Bin3_hat_1+Bin3_hat_2+Bin3_hat_3+Bin3_hat_4+`constant' if Bin3_1>`lb'&Bin3_1<=`ub';
+
+# delimit ;
+gen extra_density = Count3 - counterfactual;
+
+gen below_threshold=.;
+replace below_threshold=1 if Bin3_1<`cutoff'&Bin3_1>`lb';
+replace below_threshold=0 if Bin3_1>=`cutoff'&Bin3_1<=`ub';
+
+egen Total_extra_density=total(extra_density), by(below_threshold);
+tab Total_extra_density below_threshold;
+
+sum Total_extra_density if below_threshold==1;
+local B=`r(mean)';
+
+gen weights = extra_density/`B';
+gen ratio_c = counterfactual*weights;
+
+sum ratio_c if below_threshold==1;
+local h_0=`r(mean)'*`r(N)';
+drop ratio_c weights;
+
+// Locals to show in box
+local b=`B'/`h_0';
+local b = round(100*`b')/100;
+disp "Bunching estimate for `Threshold' Million Threshold, in year `year', is `b'";
+restore; 
+
+
+//Attempt to do what Jan had requested. 
 #delimit ;
 local year=4;
 local lb=0;
 local ub=600;
 local Exception=2000;
-
 
 twoway (bar Count3 bin3 if TaxYear==`year'&bin3>`lb'&bin3<`ub'&SerialCount3==1, sort), 
 	   title("Bunching in Year `year' at `Threshold' Million cutoff") 
@@ -487,29 +382,13 @@ graph export "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4
 
 
 //Printing graphs without the bunching
-
-
 #delimit ;
 local year=5;
 local cutoff=10;
 local l_cutoff=5;
 local u_cutoff=15;
 local Exception=2000;
-
 local Threshold=1;
-
-/*
-twoway (connected Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', sort)
-       (fpfit Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', estopts(degree(4))), 
-	   xline(`cutoff')
-	   title("Bunching in Year `year' at `Threshold' Million cutoff") 
-	   graphregion(color(white)) 
-	   xtitle("Revenue (in 30,000 rupees)")
-	   note("4th Degree polynomial.");
-graph save Graph "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_30000.gph";
-graph export "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4_30000.pdf", as(pdf) replace;
-
-*/
 
 twoway (connected VatRatio3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', sort)
        (fpfit VatRatio3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', estopts(degree(4))), 
