@@ -1,3 +1,5 @@
+
+{
 cd "E:\data"
 
 //use "PreliminaryAnalysis\returns\form16_data_v3_0901.dta", clear
@@ -188,28 +190,28 @@ drop if QuarterlyDummy==1&MonthlyDummy==1&TaxYear==3
 
 
 collapse (firstnm) WardName (sum)AdjustCSTLiability RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxYear)
+}
 
 gen PositiveContribution=0
 replace PositiveContribution=1 if MoneyDeposited>0
-
-gsort DealerTIN TaxYear
-by DealerTIN: gen TotalCount=_N
-by DealerTIN: gen YearCount=_n
-gsort DealerTIN TaxYear
-by DealerTIN: gen DeltaMoneyDeposited=MoneyDeposited-MoneyDeposited[_n-1]
-by DealerTIN: gen GrowthRate=DeltaMoneyDeposited/MoneyDeposited[_n-1]
-
-
 gen AllCentral=0
 replace AllCentral=1 if TurnoverGross==TurnoverCentral&TurnoverGross>0
-
 gen ZeroTurnover=0
 replace ZeroTurnover=1 if TurnoverGross==0
 
 drop if ZeroTurnover==1
 
+
+gsort DealerTIN TaxYear
+	by DealerTIN: gen TotalCount=_N
+	by DealerTIN: gen YearCount=_n
+	by DealerTIN: gen DeltaMoneyDeposited=MoneyDeposited-MoneyDeposited[_n-1]
+	by DealerTIN: gen GrowthRate=DeltaMoneyDeposited/MoneyDeposited[_n-1]
+
+
 replace TurnoverGross=TurnoverGross/100000
 replace MoneyDeposited=MoneyDeposited/100000
+
 gen VR=MoneyDeposited/TurnoverGross
 
 
@@ -226,9 +228,7 @@ by TaxYear bin3: egen MeanMoneyDeposited3=mean(MoneyDeposited)
 //For Thresholds 1 and 2 
 drop bin3 Count3 SerialCount3 VatRatio3 PC3 MeanMoneyDeposited3
 
-egen bin1=cut(TurnoverGross), at(0(.1)200)
-egen bin2=cut(TurnoverGross), at(0(.2)200)
-egen bin3=cut(TurnoverGross), at(0(.3)200)
+egen bin3=cut(TurnoverGross), at(0(.3)700)
 /*
 
 egen bin1=cut(TurnoverGross), at(300(.1)700)
@@ -250,18 +250,18 @@ by TaxYear bin3: egen MeanMoneyDeposited3=mean(MoneyDeposited)
 // When doing 50 Million = 50
 
 #delimit ;
-local year=3;
-local lb=475;
-local ub=540;
+local year=2;
+local lb=494;
+local ub=517;
 local cutoff=500;
-local l_cutoff=400;
-local u_cutoff=600;
-local Exception=1100;
+local l_cutoff=460;
+local u_cutoff=540;
+local Exception=500;
 
 local Threshold=50;
 
 twoway (connected Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&SerialCount3==1&Count3<`Exception', sort)
-       (fpfit Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&(bin3<`lb'|bin3>`ub')&SerialCount3==1&Count3<`Exception', estopts(degree(4))), 
+       (fpfit Count3 bin3 if TaxYear==`year'&bin3>`l_cutoff'&bin3<`u_cutoff'&(bin3<=`lb'|bin3>`ub')&SerialCount3==1&Count3<`Exception', estopts(degree(4))), 
 	   xline(`cutoff') xline(`lb', lpattern(dash) lcolor(maroon)) xline(`ub', lpattern(dash) lcolor(maroon)) 
 	   title("Bunching in Year `year' at `Threshold' Million cutoff") 
 	   graphregion(color(white)) 
@@ -273,12 +273,12 @@ graph export "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4
 
 # delimit ;
 local year=3;
-local lb=475;
-local ub=540;
+local lb=496;
+local ub=511;
 local l_cutoff=400;
 local u_cutoff=600;
 local cutoff=500;
-local Exception=1100;
+local Exception=500;
 local Threshold=50;
 
 preserve;
@@ -331,6 +331,9 @@ drop ratio_c weights;
 local b=`B'/`h_0';
 local b = round(100*`b')/100;
 disp "Bunching estimate for `Threshold' Million Threshold, in year `year', is `b'";
+disp "Lower Bound is `lb'";
+disp "Lower Bound is `ub'";
+
 restore; 
 
 
