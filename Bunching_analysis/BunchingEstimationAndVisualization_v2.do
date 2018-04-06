@@ -272,14 +272,15 @@ graph export "F:\Bunching_analysis\BunchingYear`year'_`Threshold'Million_Degree4
 
 
 # delimit ;
-local year=3;
-local lb=496;
-local ub=511;
-local l_cutoff=400;
-local u_cutoff=600;
-local cutoff=500;
+local year=2;
+local lb=49;
+local ub=52.7;
+local l_cutoff=40;
+local u_cutoff=60;
+local cutoff=50;
 local Exception=500;
-local Threshold=50;
+local Threshold=5;
+local Debug=1;
 
 preserve;
 keep if SerialCount3==1;
@@ -290,12 +291,10 @@ gen Bin3_2=Bin3_1^2;
 gen Bin3_3=Bin3_1^3;
 gen Bin3_4=Bin3_1^4;
 	
-# delimit ;
 reg Count3 Bin3_1 Bin3_2 Bin3_3 Bin3_4 if Bin3_1>`l_cutoff'&Bin3_1<`u_cutoff'&(Bin3_1<=`lb'|Bin3_1>`ub')&Count3<`Exception';
 predict counterfactual;
 
 local constant = _b[_cons]; // This saves the coefficients of the polynomial
-display `constant';
 
 forvalues i =1(1)4	{;
 	local polycoeff`i' = _b[Bin3_`i'];
@@ -304,7 +303,6 @@ forvalues i =1(1)4	{;
 };
 
 local constant = _b[_cons]; // This saves the coefficients of the polynomial
-display `constant';
 replace counterfactual=Bin3_hat_1+Bin3_hat_2+Bin3_hat_3+Bin3_hat_4+`constant' if Bin3_1>`lb'&Bin3_1<=`ub';
 
 # delimit ;
@@ -314,21 +312,33 @@ gen below_threshold=.;
 replace below_threshold=1 if Bin3_1<`cutoff'&Bin3_1>`lb';
 replace below_threshold=0 if Bin3_1>=`cutoff'&Bin3_1<=`ub';
 
+/*if `Debug'==1 list extra_density below_threshold if below_threshold!=.;
+//if `Debug'==1 list counterfactual below_threshold if below_threshold!=.;*/
+
 egen Total_extra_density=total(extra_density), by(below_threshold);
 tab Total_extra_density below_threshold;
 
 sum Total_extra_density if below_threshold==1;
 local B=`r(mean)';
+if `Debug'==1 display `B';
+
 
 gen weights = extra_density/`B';
-gen ratio_c = counterfactual*weights;
+sum weights if below_threshold==1,detail;
 
-sum ratio_c if below_threshold==1;
+gen ratio_c = counterfactual*weights;
+if `Debug'==1 list extra_density counterfactual weights ratio_c below_threshold if below_threshold!=.;
+
+//if (`Debug'==1)	sum counterfactual if below_threshold==1,detail;
+
+sum ratio_c if below_threshold==1,detail;
 local h_0=`r(mean)'*`r(N)';
+if `Debug'==1 display `h_0';
 drop ratio_c weights;
 
 // Locals to show in box
 local b=`B'/`h_0';
+if `Debug'==1  display `b';
 local b = round(100*`b')/100;
 disp "Bunching estimate for `Threshold' Million Threshold, in year `year', is `b'";
 disp "Lower Bound is `lb'";
